@@ -6,41 +6,18 @@
 <title>Overstappen</title>
 
 <style>
-/* Layout & look gebaseerd op het bijgevoegde halte_scherm.html :contentReference[oaicite:0]{index=0} */
-
-@font-face {
-  font-family: 'FlandersArtSans';
-  src: url('fonts/FlandersArtSans-Bold.woff') format('woff');
-  font-weight: 600;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'FlandersArtSans';
-  src: url('fonts/FlandersArtSans-Medium.woff') format('woff');
-  font-weight: 500;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'FlandersArtSans';
-  src: url('fonts/FlandersArtSans-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-}
-
 :root{
   --bg:#111;
   --card:#333;
-  --card2:#2e2e2e;
   --text:#fff;
   --muted:#ccc;
-  --line:#444;
   --accent:#FFCC11;
 }
 
 *{ box-sizing: border-box; }
 
 body{
-  font-family: 'FlandersArtSans', Arial, sans-serif;
+  font-family: Arial, sans-serif;
   background-color: var(--bg);
   color: var(--text);
   height: 100vh;
@@ -54,7 +31,7 @@ body{
   justify-content:flex-start;
 }
 
-/* ===== Header (zelfde vibe) ===== */
+/* ===== Header ===== */
 .header{
   width: 100%;
   display:flex;
@@ -64,7 +41,7 @@ body{
 
 .title{
   font-size: 3.75em;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: .01em;
 }
 
@@ -73,7 +50,7 @@ body{
   font-weight: 400;
 }
 
-/* ===== 2 kolommen in dezelfde "stops" stijl ===== */
+/* ===== 2 kolommen ===== */
 .departures{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -89,30 +66,14 @@ body{
   body{ overflow:auto; }
 }
 
-/* container met timeline zoals in bijlage */
 .col{
-  position: relative;
   display:flex;
   flex-direction:column;
   width: 100%;
   overflow:hidden;
 }
 
-.timeline{
-  position:absolute;
-  left: 36px;
-  width: 6px;
-  background-color: #fff;
-  border-radius: 2px;
-  z-index: 0;
-  top: 20px;
-  bottom: 20px;
-  opacity: 0.95;
-}
-
 .list{
-  position: relative;
-  z-index: 1;
   display:flex;
   flex-direction:column;
   gap: 15px;
@@ -120,38 +81,14 @@ body{
   padding: 10px 0;
 }
 
-/* rijkaart zoals .stop in bijlage */
+/* rijkaart */
 .row{
-  position: relative;
   display:flex;
   align-items:center;
   justify-content:space-between;
   background-color: var(--card);
   border-radius: 15px;
-  padding: 15px 25px 15px 60px;
-}
-
-.row::before{
-  content:"";
-  position:absolute;
-  left: 25px;
-  width: 20px;
-  height: 20px;
-  background-color: var(--bg);
-  border: 5px solid #fff;
-  border-radius:50%;
-  transform: translateY(-50%);
-  top: 50%;
-}
-
-/* eerste in elke kolom pulsen */
-.row.first::before{
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: translateY(-50%) scale(1.0); }
-  50% { transform: translateY(-50%) scale(1.3); }
+  padding: 15px 25px;
 }
 
 .left{
@@ -164,11 +101,11 @@ body{
 .line-box{
   background-color: var(--accent);
   color: #000;
-  -webkit-text-stroke: 2px #fff; /* zelfde feel */
+  -webkit-text-stroke: 2px #fff;
   padding: 5px 18px;
   border-radius: 25px;
   font-size: 2.2em;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 0 15px rgba(0,0,0,0.3);
   line-height: 1.1;
   white-space: nowrap;
@@ -176,7 +113,7 @@ body{
 
 .dest{
   font-size: 2.25em;
-  font-weight: 500;
+  font-weight: 600;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -185,7 +122,7 @@ body{
 
 .time{
   font-size: 2.0em;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--muted);
   text-align:right;
   min-width: 90px;
@@ -193,23 +130,10 @@ body{
   white-space: nowrap;
 }
 
-/* Footer in dezelfde stijl */
-.footer{
-  font-size: 3em;
-  font-weight: 500;
-  margin-top: auto;
-  margin-bottom: 3.25%;
-  width: 100%;
-  text-align: center;
-  padding: 2%;
-  border-top: 2px solid var(--line);
-}
-
-/* Kleine statusregel (optioneel, niet schreeuwerig) */
 .sub{
   font-size: 1.25em;
   font-weight: 400;
-  color: rgba(255,255,255,.70);
+  color: rgba(255,255,255,.55);
   margin-top: 0.75%;
   margin-bottom: 0.25%;
   width:100%;
@@ -225,30 +149,26 @@ body{
   <div class="clock" id="clock">--:--</div>
 </div>
 
-<div class="sub" id="subline">—</div>
+<div class="sub" id="subline"></div>
 
-<div class="departures">
-  <div class="col">
-    <div class="timeline"></div>
+<div class="departures" id="grid">
+  <div class="col" id="colLeft">
     <div class="list" id="leftList"></div>
   </div>
 
-  <div class="col">
-    <div class="timeline"></div>
+  <div class="col" id="colRight">
     <div class="list" id="rightList"></div>
   </div>
 </div>
-
-<div class="footer" id="footer">—</div>
 
 <script>
 /* ================= CONFIG ================= */
 const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
 
-// Per halte/perron max 7 (zoals eerder gevraagd)
+// Per halte/perron max 7
 const MAX_PER_HALTE = 7;
 
-// We tonen 2 kolommen van 6 = 12 entries totaal
+// 2 kolommen van 6 = 12 totaal
 const COL_SIZE = 6;
 const TOTAL_SHOW = 12;
 
@@ -319,7 +239,6 @@ function cleanStopName(name){
 }
 
 /* ================= ROUTES LOOKUP ================= */
-// prefix4 -> { shortName, color, textColor }
 let routeMap = new Map();
 
 async function loadRoutes(){
@@ -364,7 +283,6 @@ function getRouteBadge(doorkomst){
   const entiteit = Number(doorkomst.entiteitnummer);
   const lijnnr = Number(doorkomst.lijnnummer);
 
-  // (entiteit*1000)+lijnnr => eerste 4 cijfers
   const routeKeyNum = (entiteit * 1000) + lijnnr;
   const prefix4 = String(routeKeyNum).padStart(4,"0").slice(0,4);
 
@@ -378,7 +296,6 @@ function getRouteBadge(doorkomst){
 
 /* ================= STOPS LOOKUP ================= */
 let stopIdToName = new Map();
-// normalizedCleanName -> { displayName, stopIds[] }
 let cleanGroup = new Map();
 
 async function loadStops(){
@@ -421,7 +338,7 @@ async function loadStops(){
   log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
 }
 
-/* ================= API: per stop fetch (robust) ================= */
+/* ================= API: per stop fetch ================= */
 async function fetchRealtimeForSingleStop(stopId){
   const ent = getEntityFromStopId(stopId);
   if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
@@ -444,14 +361,12 @@ async function fetchRealtimeForSingleStop(stopId){
     }
 
     const data = await res.json();
-
     const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
     const blocks = [];
     for(const item of lijst){
       const b = item?.halteDoorkomsten || [];
       for(const hd of b) blocks.push(hd);
     }
-
     return { stopId, blocks, error: null };
   }catch(e){
     return { stopId, blocks: [], error: String(e?.message || e) };
@@ -465,22 +380,18 @@ function renderList(el, items){
     return;
   }
 
-  el.innerHTML = items.map((d, i) => {
+  el.innerHTML = items.map((d) => {
     const { shortName, bg, fg } = getRouteBadge(d);
 
-    // lijn-box in dezelfde stijl: rounded, stroke
-    // als route_color bestaat => die kleur gebruiken, anders accent
     const background = bg || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    // als textColor bestaat => gebruiken, anders zwart (zoals bijlage)
     const color = fg || "#000";
 
-    // stroke altijd wit voor leesbaarheid (zoals bijlage)
     const bestemming = (d.bestemming ?? "—").trim() || "—";
     const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
     const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
 
     return `
-      <div class="row ${i===0 ? "first" : ""}">
+      <div class="row">
         <div class="left">
           <span class="line-box" style="background-color:${background};color:${color};">${shortName}</span>
           <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
@@ -497,10 +408,10 @@ async function loadBoard(){
 
   if(!stopId){
     $("title").textContent = "Overstappen aan —";
-    $("subline").textContent = "Gebruik ?stopId=123456";
+    $("subline").textContent = "";
     renderList($("leftList"), []);
     renderList($("rightList"), []);
-    $("footer").textContent = "—";
+    $("colRight").style.display = "none";
     return;
   }
 
@@ -521,12 +432,7 @@ async function loadBoard(){
   }
   if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
 
-  log("[grouping] stopId:", stopId);
-  log("[grouping] rawName:", rawName);
-  log("[grouping] cleaned:", cleaned, "norm:", norm);
   log("[grouping] stopIds:", groupStopIds);
-
-  $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
 
   // fetch per stop en merge
   const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
@@ -541,7 +447,6 @@ async function loadBoard(){
     for(const hd of r.blocks){
       const dks = hd?.doorkomsten || [];
       const sliced = dks.slice(0, MAX_PER_HALTE);
-      log("[api-single] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
       for(const d of sliced) all.push(d);
     }
   }
@@ -549,7 +454,7 @@ async function loadBoard(){
   if(!all.length){
     renderList($("leftList"), []);
     renderList($("rightList"), []);
-    $("footer").textContent = "Geen doorkomsten";
+    $("colRight").style.display = "none";
     return;
   }
 
@@ -560,18 +465,18 @@ async function loadBoard(){
     return ta - tb;
   });
 
-  // pak 12: links 6, rechts 6
   const show = all.slice(0, TOTAL_SHOW);
   const left = show.slice(0, COL_SIZE);
   const right = show.slice(COL_SIZE, COL_SIZE*2);
 
   renderList($("leftList"), left);
-  renderList($("rightList"), right);
 
-  // footer (zelfde “Volgende halte: …” vibe maar nu “Eerstvolgende: …”)
-  const first = show[0];
-  const firstDest = first?.bestemming ? first.bestemming : "—";
-  $("footer").textContent = `Eerstvolgende: ${firstDest}`;
+  if(right.length === 0){
+    $("colRight").style.display = "none";
+  } else {
+    $("colRight").style.display = "";
+    renderList($("rightList"), right);
+  }
 }
 
 /* ================= BOOT ================= */
@@ -581,10 +486,10 @@ async function loadBoard(){
   }catch(e){
     console.error(e);
     $("title").textContent = "Overstappen aan —";
-    $("subline").textContent = "GTFS bestanden konden niet geladen worden (routes.txt / stops.txt).";
+    $("subline").textContent = "";
     renderList($("leftList"), []);
     renderList($("rightList"), []);
-    $("footer").textContent = "—";
+    $("colRight").style.display = "none";
     return;
   }
 
