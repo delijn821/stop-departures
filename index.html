@@ -8,170 +8,281 @@
   <style>
     :root{
       --accent:#FFCC11;
-      --bg:#070a0f;
-      --panel:#0e1520;
-      --panel2:#0c121b;
-      --line:#233246;
-      --text:#f3f6fb;
-      --muted:rgba(243,246,251,.78);
-      --muted2:rgba(243,246,251,.60);
+
+      --bg0:#06080c;
+      --bg1:#0b0f16;
+
+      --panel:#202326;
+      --panel2:#2a2d31;
+
+      --line:#2c3442;
+      --text:#f4f6fb;
+      --muted:rgba(244,246,251,.78);
+      --muted2:rgba(244,246,251,.60);
 
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      font-size: 18px; /* basis groter voor leesbaarheid */
+      font-size: 18px;
     }
 
     html,body{height:100%;}
     body{
       margin:0;
-      background: var(--bg);
+      background:
+        radial-gradient(900px 500px at 18% 0%, rgba(255,204,17,.16), transparent 62%),
+        radial-gradient(900px 500px at 85% 0%, rgba(255,255,255,.06), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
+    /* ===== Header (like the screenshot vibe) ===== */
     header{
-      padding: 22px 22px 18px 22px;
-      border-bottom: 2px solid rgba(255,204,17,.45);
-      background:
-        radial-gradient(1200px 300px at 20% 0%, rgba(255,204,17,.18), transparent 60%),
-        linear-gradient(180deg, rgba(255,204,17,.08), transparent 70%);
+      padding: 28px 28px 20px 28px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
     }
-
+    .header-row{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
     h1{
       margin:0;
-      font-size: 30px;
-      line-height: 1.15;
+      font-size: 46px;
+      line-height: 1.05;
       letter-spacing: .01em;
-      font-weight: 900;
+      font-weight: 950;
+      text-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+    .clock{
+      font-variant-numeric: tabular-nums;
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 500;
+      opacity: .96;
+      text-shadow: 0 2px 12px rgba(0,0,0,.35);
+      white-space:nowrap;
     }
     .subline{
-      margin-top: 8px;
-      font-size: 14px;
+      margin-top: 10px;
+      font-size: 15px;
       color: var(--muted2);
     }
 
     main{
-      max-width: 1100px;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 22px;
+      padding: 26px 28px 34px 28px;
+    }
+
+    /* ===== Two tables side-by-side ===== */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      h1{ font-size: 34px; }
+      .clock{ font-size: 34px; }
+    }
+
+    /* Table wrapper like rounded card */
+    .table-card{
+      background: rgba(0,0,0,.10);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .table-head{
+      padding: 14px 18px;
+      background: rgba(255,255,255,.06);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .table-head .label{
+      font-size: 13px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(244,246,251,.82);
+      font-weight: 800;
+    }
+    .table-head .count{
+      font-size: 13px;
+      color: var(--muted2);
+      font-variant-numeric: tabular-nums;
     }
 
     table{
       width:100%;
       border-collapse:separate;
-      border-spacing:0;
-      border-radius: 18px;
-      overflow:hidden;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+      border-spacing:0 12px; /* "cards" rows */
+      padding: 14px 14px 16px 14px;
     }
 
-    thead th{
-      text-align:left;
-      font-size: 13px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: rgba(243,246,251,.80);
-      padding: 16px 16px;
-      border-bottom: 1px solid var(--line);
-      background: var(--panel2);
-    }
-
-    tbody td{
-      padding: 16px 16px;
-      border-bottom: 1px solid rgba(35,50,70,.85);
-      font-size: 20px;
-      line-height: 1.2;
+    /* each row looks like a rounded grey bar */
+    tr{ }
+    td{
+      padding: 18px 18px;
+      font-size: 26px;
+      line-height: 1.1;
       vertical-align: middle;
     }
-    tbody tr:last-child td{border-bottom:none;}
-    tbody tr:hover{background: rgba(255,255,255,.02);}
+    .row-card td{
+      background: rgba(255,255,255,.14);
+      border-top: 1px solid rgba(255,255,255,.10);
+      border-bottom: 1px solid rgba(0,0,0,.25);
+    }
+    .row-card td:first-child{ border-radius: 18px 0 0 18px; }
+    .row-card td:last-child{ border-radius: 0 18px 18px 0; }
 
+    /* Layout inside row */
+    .cell-left{
+      width: 140px;
+      padding-right: 10px;
+    }
+    .cell-mid{
+      width: auto;
+      font-weight: 900;
+      letter-spacing: .01em;
+      text-shadow: 0 2px 10px rgba(0,0,0,.22);
+    }
+    .cell-right{
+      width: 120px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 750;
+      opacity: .95;
+      white-space: nowrap;
+    }
+
+    /* Line badge */
     .badge{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-weight: 950;
+      min-width: 116px;
+      padding: 12px 16px;
+      border-radius: 22px;
+      font-weight: 1000;
       letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
-      min-width: 76px;
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+      border: 2px solid rgba(255,255,255,.20);
+      text-shadow: 0 2px 0 rgba(0,0,0,.30);
+      box-shadow: 0 8px 18px rgba(0,0,0,.28);
     }
     .badge.fallback{
-      background: rgba(255,204,17,.20);
-      color: #111;
+      background: rgba(255,204,17,.22);
+      color: #101010;
       border-color: rgba(255,204,17,.45);
-    }
-
-    .dest{
-      font-weight: 750;
-    }
-
-    .depart{
-      font-variant-numeric: tabular-nums;
-      font-weight: 950;
-      white-space: nowrap;
-      font-size: 22px;
+      text-shadow: none;
     }
 
     .muted{
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
     }
 
-    .hint{
+    .empty{
+      padding: 18px 18px 20px 18px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    /* subtle divider below tables if needed */
+    .footer-hint{
       margin-top: 14px;
       color: var(--muted2);
       font-size: 14px;
+    }
+
+    /* Make long destinations truncate nicely */
+    .dest{
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+      display:block;
     }
   </style>
 </head>
 
 <body>
 <header>
-  <h1 id="title">Overstappen aan —</h1>
+  <div class="header-row">
+    <h1 id="title">Overstappen aan —</h1>
+    <div class="clock" id="clock">--:--</div>
+  </div>
   <div class="subline" id="subline">—</div>
 </header>
 
 <main>
-  <table aria-label="Doorkomsten">
-    <thead>
-      <tr>
-        <th style="width:160px;">Lijn</th>
-        <th>Bestemming</th>
-        <th style="width:160px;">Vertrek</th>
-      </tr>
-    </thead>
-    <tbody id="rows">
-      <tr><td colspan="3" class="muted">Laden…</td></tr>
-    </tbody>
-  </table>
+  <div class="grid">
+    <section class="table-card">
+      <div class="table-head">
+        <div class="label">Eerstvolgende 6</div>
+        <div class="count" id="countLeft">0</div>
+      </div>
+      <div id="leftWrap">
+        <table aria-label="Eerstvolgende doorkomsten">
+          <tbody id="rowsLeft">
+            <tr><td class="empty">Laden…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <div class="hint">
-    Gebruik: <strong style="color:var(--accent);">…/?stopId=123456</strong> • Console bevat logging voor grouping/matches.
+    <section class="table-card">
+      <div class="table-head">
+        <div class="label">Daarna</div>
+        <div class="count" id="countRight">0</div>
+      </div>
+      <div id="rightWrap">
+        <table aria-label="Volgende doorkomsten">
+          <tbody id="rowsRight">
+            <tr><td class="empty">Laden…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer-hint">
+    Gebruik: <strong style="color:var(--accent);">…/?stopId=123456</strong> • Console bevat logging (DEBUG=true).
   </div>
 </main>
 
 <script>
   // ================= CONFIG =================
   const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
-  const MAX_PER_HALTE = 7;     // max doorkomsten per halte/perron (per blok uit API)
-  const MAX_AANTAL_API = 10;   // API parameter (mag hoger, wij knippen zelf)
+  const MAX_PER_HALTE = 7;       // max doorkomsten per halte/perron (per blok uit API)
+  const MAX_AANTAL_API = 10;     // API parameter
   const REFRESH_MS = 15000;
 
-  // Zet dit op false als je console clean wil
+  // 2 tabellen: links 6, rechts 6
+  const COL_SIZE = 6;
+
+  // logging
   const DEBUG = true;
 
   // ================= HELPERS =================
   const $ = (id) => document.getElementById(id);
   function log(...args){ if(DEBUG) console.log(...args); }
 
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function setClock(){
+    const d = new Date();
+    $("clock").textContent = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
   function parseCSVLine(line){
-    // eenvoudige CSV parser met quotes (voldoende voor GTFS)
     const out = [];
     let cur = "", inQ = false;
     for(let i=0;i<line.length;i++){
@@ -180,8 +291,7 @@
         if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
         else inQ = !inQ;
       } else if(ch === "," && !inQ){
-        out.push(cur);
-        cur = "";
+        out.push(cur); cur = "";
       } else {
         cur += ch;
       }
@@ -213,7 +323,6 @@
   }
 
   function normalizeName(s){
-    // voor matching: lowercase + whitespace normalisatie
     return (s || "")
       .toLowerCase()
       .replace(/\s+/g, " ")
@@ -222,16 +331,14 @@
 
   function cleanStopName(name){
     if(!name) return "";
-    // knip vanaf: " perron", " opstaphalte", " afstaphalte", " quai", "," of "("
     const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
     const m = re.exec(name);
     const cut = m ? name.slice(0, m.index) : name;
-    // extra whitespace opruimen
     return cut.replace(/\s+/g, " ").trim();
   }
 
   // ================= ROUTES LOOKUP =================
-  // Map: prefix4 -> { shortName, color, textColor }
+  // prefix4 -> { shortName, color, textColor }
   let routeMap = new Map();
 
   async function loadRoutes(){
@@ -261,7 +368,6 @@
       if(routeIdRaw.length < 4) continue;
 
       const prefix4 = routeIdRaw.slice(0,4);
-      // "eerste resultaat" wint
       if(!map.has(prefix4)){
         map.set(prefix4, {
           shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
@@ -275,7 +381,6 @@
   }
 
   // ================= STOPS LOOKUP =================
-  // stopId -> rawName
   let stopIdToName = new Map();
   // normalizedCleanName -> { displayName, stopIds[] }
   let cleanGroup = new Map();
@@ -318,11 +423,9 @@
 
     stopIdToName = idToName;
     cleanGroup = group;
-
     log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
   }
 
-  // ================= ROUTE BADGE =================
   function getRouteBadge(doorkomst){
     const entiteit = Number(doorkomst.entiteitnummer);
     const lijnnr = Number(doorkomst.lijnnummer);
@@ -339,7 +442,7 @@
     return { shortName, bg, fg, prefix4 };
   }
 
-  // ================= API: PER STOP FETCH (FIX) =================
+  // ================= API: PER STOP FETCH (robust) =================
   async function fetchRealtimeForSingleStop(stopId){
     const ent = getEntityFromStopId(stopId);
     if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
@@ -362,8 +465,6 @@
       }
 
       const data = await res.json();
-
-      // kan meerdere items in halteDoorkomstenLijst hebben
       const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
       const blocks = [];
       for(const item of lijst){
@@ -377,14 +478,52 @@
     }
   }
 
+  // ================= RENDER =================
+  function renderColumn(tbodyEl, items){
+    if(!items.length){
+      tbodyEl.innerHTML = `<tr><td class="empty">Geen doorkomsten.</td></tr>`;
+      return;
+    }
+
+    const html = items.map(d => {
+      const { shortName, bg, fg } = getRouteBadge(d);
+
+      const badgeClass = bg ? "badge" : "badge fallback";
+      const badgeStyle = bg ? `background:${bg};color:${fg || "#fff"};` : "";
+
+      const bestemming = (d.bestemming ?? "—").trim() || "—";
+      const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+      const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+
+      return `
+        <tr class="row-card">
+          <td class="cell-left">
+            <span class="${badgeClass}" style="${badgeStyle}">${shortName}</span>
+          </td>
+          <td class="cell-mid">
+            <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+          </td>
+          <td class="cell-right">
+            <span class="depart">${vertrekTxt}</span>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    tbodyEl.innerHTML = html;
+  }
+
   // ================= MAIN =================
   async function loadBoard(){
     const stopId = getStopIdFromUrl();
 
     if(!stopId){
-      $("title").textContent = "Overstappen";
-      $("subline").textContent = "Geen stopId in de URL.";
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Gebruik ?stopId=123456</td></tr>`;
+      $("title").textContent = "Overstappen aan —";
+      $("subline").textContent = "Gebruik ?stopId=123456";
+      $("rowsLeft").innerHTML = `<tr><td class="empty">Geen stopId in de URL.</td></tr>`;
+      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
+      $("countLeft").textContent = "0";
+      $("countRight").textContent = "0";
       return;
     }
 
@@ -412,9 +551,8 @@
 
     $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
 
-    // 🔥 FIX: fetch PER STOP en merge
+    // Fetch per stop and merge (robust)
     const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
-
     for(const r of results){
       if(r.error) log("[api-single] ERROR for", r.stopId, r.error);
       log("[api-single] stopId", r.stopId, "blocks", r.blocks.length);
@@ -432,7 +570,10 @@
     }
 
     if(!all.length){
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen doorkomsten.</td></tr>`;
+      $("rowsLeft").innerHTML = `<tr><td class="empty">Geen doorkomsten.</td></tr>`;
+      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
+      $("countLeft").textContent = "0";
+      $("countRight").textContent = "0";
       return;
     }
 
@@ -443,51 +584,29 @@
       return ta - tb;
     });
 
-    // render
-    const rowsHtml = all.map(d => {
-      const { shortName, bg, fg, prefix4 } = getRouteBadge(d);
+    const left = all.slice(0, COL_SIZE);
+    const right = all.slice(COL_SIZE, COL_SIZE*2);
 
-      const badgeStyle = bg ? `background:${bg};color:${fg || "#000"};` : ``;
-      const badgeClass = bg ? "badge" : "badge fallback";
+    $("countLeft").textContent = String(left.length);
+    $("countRight").textContent = String(right.length);
 
-      const bestemming = d.bestemming ?? "—";
-
-      // Altijd x' — realtime indien beschikbaar, anders dienstregeling
-      const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-      const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
-
-      if(DEBUG){
-        log("[row]",
-          "lijnnr", d.lijnnummer,
-          "ent", d.entiteitnummer,
-          "prefix4", prefix4,
-          "short", shortName,
-          "best", bestemming,
-          "vertrek", vertrekTxt
-        );
-      }
-
-      return `
-        <tr>
-          <td><span class="${badgeClass}" style="${badgeStyle}">${shortName}</span></td>
-          <td class="dest">${bestemming}</td>
-          <td class="depart">${vertrekTxt}</td>
-        </tr>
-      `;
-    }).join("");
-
-    $("rows").innerHTML = rowsHtml;
+    renderColumn($("rowsLeft"), left);
+    renderColumn($("rowsRight"), right);
   }
 
   // ================= BOOT =================
   (async () => {
+    setClock();
+    setInterval(setClock, 5000);
+
     try{
       await Promise.all([loadRoutes(), loadStops()]);
     } catch(e){
       console.error(e);
-      $("title").textContent = "Overstappen";
-      $("subline").textContent = "GTFS bestanden konden niet geladen worden.";
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Controleer of routes.txt en stops.txt in de root staan.</td></tr>`;
+      $("title").textContent = "Overstappen aan —";
+      $("subline").textContent = "GTFS bestanden konden niet geladen worden (routes.txt / stops.txt).";
+      $("rowsLeft").innerHTML = `<tr><td class="empty">Controleer of routes.txt en stops.txt in de root staan.</td></tr>`;
+      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
       return;
     }
 
