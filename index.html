@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Haltebord</title>
+  <title>Overstappen</title>
   <style>
     :root{
       --accent:#FFCC11;
@@ -16,39 +16,21 @@
     }
     html,body{height:100%;}
     body{margin:0;background:var(--bg);color:var(--text);}
+
     header{
-      display:flex;align-items:center;justify-content:space-between;gap:14px;
-      padding:14px 18px;border-bottom:2px solid rgba(255,204,17,.35);
+      padding:18px 18px 14px 18px;
+      border-bottom:2px solid rgba(255,204,17,.35);
       background:linear-gradient(180deg, rgba(255,204,17,.10), transparent 65%);
     }
-    .title{
-      display:flex;flex-direction:column;gap:2px;
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.02em;
+      font-weight:800;
     }
-    .title h1{margin:0;font-size:16px;letter-spacing:.02em;}
-    .title .sub{font-size:12px;color:var(--muted);}
-    .clock{
-      font-variant-numeric: tabular-nums;
-      border:1px solid rgba(255,204,17,.35);
-      background:rgba(255,204,17,.08);
-      padding:8px 12px;border-radius:999px;
-      font-size:13px;
-    }
+
     main{max-width:980px;margin:0 auto;padding:18px;}
-    .status{
-      margin-bottom:12px;
-      font-size:12px;color:var(--muted);
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-    }
-    .pill{
-      border:1px solid var(--line);
-      background:var(--panel);
-      padding:6px 10px;border-radius:999px;
-    }
-    .pill.accent{
-      border-color: rgba(255,204,17,.45);
-      background: rgba(255,204,17,.10);
-      color: var(--text);
-    }
+
     table{
       width:100%;
       border-collapse:separate;border-spacing:0;
@@ -68,10 +50,11 @@
     }
     tbody tr:last-child td{border-bottom:none;}
     tbody tr:hover{background:rgba(255,255,255,.02);}
+
     .badge{
       display:inline-block;
       padding:6px 10px;border-radius:12px;
-      font-weight:800;letter-spacing:.02em;
+      font-weight:900;letter-spacing:.02em;
       font-variant-numeric: tabular-nums;
       min-width:52px;text-align:center;
       border:1px solid rgba(255,255,255,.12);
@@ -81,36 +64,22 @@
       color:#111;
       border-color:rgba(255,204,17,.40);
     }
-    .dest{font-weight:600;}
+    .dest{font-weight:650;}
     .depart{
       font-variant-numeric: tabular-nums;
-      font-weight:700;
+      font-weight:900;
       white-space:nowrap;
     }
     .muted{color:var(--muted);font-size:12px;}
-    .error{
-      color:#ffb4b4;
-      border-color:#7a2c2c !important;
-      background:#1a0f12 !important;
-    }
   </style>
 </head>
 
 <body>
 <header>
-  <div class="title">
-    <h1>Doorkomsten</h1>
-    <div class="sub" id="subtitle">—</div>
-  </div>
-  <div class="clock" id="clock">--:--:--</div>
+  <h1 id="title">Overstappen aan —</h1>
 </header>
 
 <main>
-  <div class="status">
-    <span class="pill accent" id="stopPill">stopId=—</span>
-    <span class="pill" id="updatePill">Laden…</span>
-  </div>
-
   <table aria-label="Doorkomsten tabel">
     <thead>
       <tr>
@@ -123,7 +92,6 @@
       <tr><td colspan="3" class="muted">Laden…</td></tr>
     </tbody>
   </table>
-
 </main>
 
 <script>
@@ -136,21 +104,8 @@
   const $ = (id) => document.getElementById(id);
   const pad2 = (n) => String(n).padStart(2, "0");
 
-  function fmtClock(d){
-    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  }
-  function fmtHM(iso){
-    if(!iso) return "—";
-    const d = new Date(iso);
-    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  }
-  function minutesUntil(iso){
-    const t = new Date(iso).getTime();
-    const now = Date.now();
-    return Math.round((t - now) / 60000);
-  }
   function parseCSVLine(line){
-    // simpele CSV parser die quotes ondersteunt (genoeg voor GTFS routes.txt)
+    // simpele CSV parser met quotes (voldoende voor GTFS)
     const out = [];
     let cur = "", inQ = false;
     for(let i=0;i<line.length;i++){
@@ -168,15 +123,47 @@
     out.push(cur);
     return out;
   }
-  function setUpdate(text, isError=false){
-    const el = $("updatePill");
-    el.textContent = text;
-    el.classList.toggle("error", !!isError);
+
+  function minutesUntil(iso){
+    const t = new Date(iso).getTime();
+    const now = Date.now();
+    return Math.round((t - now) / 60000);
   }
 
-  // ========= ROUTES LOOKUP (routes.txt) =========
-  // Map: prefix4 -> { shortName, color, textColor }
+  function formatMinutes(m){
+    // altijd x' (ook als negatief)
+    if(m <= 0) return "nu";
+    return `${m}'`;
+  }
+
+  function getStopIdFromUrl(){
+    const p = new URLSearchParams(location.search);
+    return (p.get("stopId") || "").trim();
+  }
+
+  function getEntityFromStopId(stopId){
+    const firstChar = stopId[0];
+    const ent = parseInt(firstChar, 10);
+    return Number.isNaN(ent) ? null : ent;
+  }
+
+  function cleanStopName(name){
+    if(!name) return "";
+    // knip vanaf: " perron", " opstaphalte", " afstaphalte", " quai", "," of "("
+    const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
+    const m = re.exec(name);
+    const cut = m ? name.slice(0, m.index) : name;
+    return cut.trim();
+  }
+
+  // ========= GTFS LOOKUPS =========
+  // routes: prefix4 -> { shortName, color, textColor }
   let routeMap = new Map();
+  // stops:
+  //  - stopId -> rawName
+  //  - cleanName -> [stopId, ...]
+  let stopIdToName = new Map();
+  let cleanNameToStopIds = new Map();
 
   async function loadRoutes(){
     const res = await fetch("./routes.txt", { cache: "no-store" });
@@ -194,7 +181,7 @@
     const iColor   = idx("route_color");
     const iTextCol = idx("route_text_color");
 
-    if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist kolommen (route_id/route_short_name)");
+    if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist route_id/route_short_name");
 
     const map = new Map();
     for(let li=1; li<lines.length; li++){
@@ -205,7 +192,6 @@
       if(routeIdRaw.length < 4) continue;
 
       const prefix4 = routeIdRaw.slice(0,4);
-      // "eerste resultaat" winnen: dus enkel zetten als nog niet bestaat
       if(!map.has(prefix4)){
         map.set(prefix4, {
           shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
@@ -217,45 +203,101 @@
     routeMap = map;
   }
 
-  // ========= STOPID -> endpoint =========
-  function getStopId(){
-    const p = new URLSearchParams(location.search);
-    return (p.get("stopId") || "").trim();
-  }
-  function getEntityFromStopId(stopId){
-    // "het eerste getal ervan is de haltesleutel"
-    const firstChar = stopId[0];
-    const ent = parseInt(firstChar, 10);
-    if(Number.isNaN(ent)) return null;
-    return ent;
+  async function loadStops(){
+    const res = await fetch("./stops.txt", { cache: "no-store" });
+    if(!res.ok) throw new Error(`stops.txt niet gevonden (HTTP ${res.status})`);
+    const txt = await res.text();
+
+    const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if(lines.length < 2) throw new Error("stops.txt lijkt leeg");
+
+    const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+    const idx = (name) => header.indexOf(name);
+
+    const iStopId = idx("stop_id");
+    const iStopName = idx("stop_name");
+    if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
+
+    const idToName = new Map();
+    const cleanToIds = new Map();
+
+    for(let li=1; li<lines.length; li++){
+      const row = parseCSVLine(lines[li]);
+      if(row.length !== header.length) continue;
+
+      const stopId = (row[iStopId] ?? "").replace(/^"|"$/g,"").trim();
+      const stopName = (row[iStopName] ?? "").replace(/^"|"$/g,"").trim();
+      if(!stopId) continue;
+
+      idToName.set(stopId, stopName);
+
+      const clean = cleanStopName(stopName);
+      if(!clean) continue;
+
+      if(!cleanToIds.has(clean)) cleanToIds.set(clean, []);
+      cleanToIds.get(clean).push(stopId);
+    }
+
+    stopIdToName = idToName;
+    cleanNameToStopIds = cleanToIds;
   }
 
-  // ========= MAIN FETCH =========
+  // ========= API FETCH =========
+  function buildHaltesLijstKey(stopIds){
+    // "2_212223_2_212224" (entiteit = eerste cijfer stopId)
+    // behoud volgorde zoals in stops.txt (die pushen we al in file-volgorde)
+    const parts = [];
+    for(const sid of stopIds){
+      const ent = getEntityFromStopId(sid);
+      if(ent === null) continue;
+      parts.push(`${ent}_${sid}`);
+    }
+    return parts.join("_");
+  }
+
+  function getRouteBadge(doorkomst){
+    const entiteit = Number(doorkomst.entiteitnummer);
+    const lijnnr = Number(doorkomst.lijnnummer);
+
+    const routeKeyNum = (entiteit * 1000) + lijnnr;
+    const prefix4 = String(routeKeyNum).padStart(4, "0").slice(0,4);
+
+    const route = routeMap.get(prefix4) || null;
+    const shortName = route?.shortName || String(lijnnr);
+
+    const bg = route?.color ? `#${route.color}` : null;
+    const fg = route?.textColor ? `#${route.textColor}` : null;
+
+    return { shortName, bg, fg };
+  }
+
   async function loadBoard(){
-    const stopId = getStopId();
-    $("stopPill").textContent = `stopId=${stopId || "—"}`;
+    const stopId = getStopIdFromUrl();
 
     if(!stopId){
-      $("subtitle").textContent = "Geen stopId in de URL.";
+      $("title").textContent = "Overstappen";
       $("rows").innerHTML = `<tr><td colspan="3" class="muted">Gebruik ?stopId=123456</td></tr>`;
-      setUpdate("Wacht op stopId…", true);
       return;
     }
 
-    const ent = getEntityFromStopId(stopId);
-    if(ent === null){
-      $("subtitle").textContent = "Ongeldige stopId.";
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">stopId moet starten met een cijfer (entiteit).</td></tr>`;
-      setUpdate("Ongeldige stopId", true);
+    const rawName = stopIdToName.get(stopId) || "";
+    const cleanName = cleanStopName(rawName) || "—";
+
+    $("title").textContent = `Overstappen aan ${cleanName}`;
+    document.title = `Overstappen aan ${cleanName}`;
+
+    // alle stop_ids met dezelfde ingekorte naam
+    const groupStopIds = cleanNameToStopIds.get(cleanName) || [stopId];
+
+    const key = buildHaltesLijstKey(groupStopIds);
+    if(!key){
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen geldige stop_ids gevonden.</td></tr>`;
       return;
     }
 
-    $("subtitle").textContent = `Entiteit ${ent} • Haltenummer ${stopId}`;
-
-    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL}`;
+    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${key}/real-time?maxAantalDoorkomsten=${MAX_AANTAL}`;
 
     try{
-      setUpdate("Ophalen…");
       const res = await fetch(url, {
         method: "GET",
         headers: {
@@ -270,54 +312,37 @@
       }
 
       const data = await res.json();
-      const doorkomsten =
-        data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten?.[0]?.doorkomsten ?? [];
 
-      if(!doorkomsten.length){
+      // De API kan meerdere halteDoorkomsten-blokken geven; we flatten alles samen
+      const lijst = data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten || [];
+      const all = [];
+      for(const hd of lijst){
+        const dks = hd?.doorkomsten || [];
+        for(const d of dks) all.push(d);
+      }
+
+      if(!all.length){
         $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen doorkomsten.</td></tr>`;
-        setUpdate("Geen doorkomsten.");
         return;
       }
 
-      // sorteer op realtime indien aanwezig anders dienstregeling
-      doorkomsten.sort((a,b)=>{
+      all.sort((a,b)=>{
         const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
         const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
         return ta - tb;
       });
 
-      const rowsHtml = doorkomsten.map(d => {
-        const entiteit = Number(d.entiteitnummer);
-        const lijnnr = Number(d.lijnnummer);
+      const rowsHtml = all.map(d => {
+        const { shortName, bg, fg } = getRouteBadge(d);
 
-        // routeKey: (entiteit * 1000) + lijnnummer  => neem eerste 4 cijfers
-        const routeKeyNum = (entiteit * 1000) + lijnnr;
-        const prefix4 = String(routeKeyNum).padStart(4, "0").slice(0,4);
-
-        const route = routeMap.get(prefix4) || null;
-        const shortName = route?.shortName || String(lijnnr);
-
-        const bg = route?.color ? `#${route.color}` : null;
-        const fg = route?.textColor ? `#${route.textColor}` : null;
-
-        const badgeStyle = bg
-          ? `background:${bg};color:${fg || "#000"};`
-          : ``;
-
+        const badgeStyle = bg ? `background:${bg};color:${fg || "#000"};` : ``;
         const badgeClass = bg ? "badge" : "badge fallback";
 
         const bestemming = d.bestemming ?? "—";
 
-        const rtIso = d["real-timeTijdstip"] || null;
-        const schedIso = d.dienstregelingTijdstip || null;
-
-        let vertrekTxt = "—";
-        if(rtIso){
-          const m = minutesUntil(rtIso);
-          vertrekTxt = (m <= 0) ? "nu" : `${m}'`;
-        } else if(schedIso){
-          vertrekTxt = fmtHM(schedIso);
-        }
+        // Vertrek altijd x' — realtime indien beschikbaar, anders dienstregeling
+        const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+        const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
 
         return `
           <tr>
@@ -329,26 +354,21 @@
       }).join("");
 
       $("rows").innerHTML = rowsHtml;
-      setUpdate(`Bijgewerkt ${fmtClock(new Date())}`);
 
     } catch(err){
       console.error(err);
       $("rows").innerHTML = `<tr><td colspan="3" class="muted">Fout: ${String(err.message || err)}</td></tr>`;
-      setUpdate("Fout bij ophalen", true);
     }
   }
 
   // ========= BOOT =========
-  // klok
-  setInterval(() => $("clock").textContent = fmtClock(new Date()), 250);
-
   (async () => {
     try{
-      await loadRoutes();
+      await Promise.all([loadRoutes(), loadStops()]);
     }catch(e){
       console.error(e);
-      setUpdate("routes.txt fout", true);
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">routes.txt kon niet geladen worden.</td></tr>`;
+      $("title").textContent = "Overstappen";
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">GTFS bestanden konden niet geladen worden.</td></tr>`;
       return;
     }
 
