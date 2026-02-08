@@ -6,20 +6,24 @@
 <title>Overstappen</title>
 
 <style>
+/* Fonts identiek geladen zoals in halte_scherm.html */
 @font-face {
   font-family: 'FlandersArtSans';
   src: url('fonts/FlandersArtSans-Bold.woff') format('woff');
   font-weight: 600;
+  font-style: normal;
 }
 @font-face {
   font-family: 'FlandersArtSans';
   src: url('fonts/FlandersArtSans-Medium.woff') format('woff');
   font-weight: 500;
+  font-style: normal;
 }
 @font-face {
   font-family: 'FlandersArtSans';
   src: url('fonts/FlandersArtSans-Regular.woff') format('woff');
   font-weight: 400;
+  font-style: normal;
 }
 
 :root{
@@ -34,98 +38,124 @@
 
 body{
   font-family: 'FlandersArtSans', Arial, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   height: 100vh;
   margin: 0;
-  padding: 2.75% 5% 0;
+  overflow: hidden;
+  padding-top: 2.75%;
+  padding-left: 5%;
+  padding-right: 5%;
   display:flex;
   flex-direction:column;
+  justify-content:flex-start;
 }
 
 /* ===== Header ===== */
 .header{
+  width: 100%;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
 .title{
-  font-size:3.75em;
-  font-weight:500;
+  font-size: 3.75em;
+  font-weight: 500; /* zoals destination in voorbeeld */
+  letter-spacing: .01em;
 }
 
 .clock{
-  font-size:3.5em;
-  font-weight:400;
+  font-size: 3.5em;
+  font-weight: 400;
 }
 
-/* ===== Layout ===== */
+/* ===== 2 kolommen ===== */
 .departures{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:26px;
-  margin-top:2.75%;
-  flex-grow:1;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  width: 100%;
+  margin-top: 2.75%;
+  flex-grow: 1;
+  overflow: hidden;
 }
 
-@media(max-width:980px){
-  .departures{grid-template-columns:1fr;}
+@media (max-width: 980px){
+  .departures{ grid-template-columns: 1fr; }
+  body{ overflow:auto; }
+}
+
+.col{
+  display:flex;
+  flex-direction:column;
+  width: 100%;
+  overflow:hidden;
 }
 
 .list{
   display:flex;
   flex-direction:column;
-  gap:22px;
+  gap: 22px;        /* meer ruimte tussen lijnen */
+  overflow:hidden;
+  padding: 10px 0;
 }
 
+/* rij: geen achtergrondvlak */
 .row{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:10px 0;
+  justify-content:space-between;
+  background: transparent;
+  padding: 10px 0;
 }
 
+/* subtiele scheidingslijn */
 .row + .row{
-  border-top:2px solid var(--divider);
-  padding-top:22px;
+  border-top: 2px solid var(--divider);
+  padding-top: 22px;
 }
 
 .left{
   display:flex;
   align-items:center;
-  gap:22px;
-  min-width:0;
+  gap: 22px;
+  min-width: 0;
 }
 
-/* lijnnummer */
+/* lijnbadge: Bold 600, zoals in voorbeeld line-box */
 .line-box{
-  padding:10px 24px;
-  border-radius:28px;
-  font-size:2.45em;
-  font-weight:600;
-  line-height:1.1;
-  white-space:nowrap;
-  box-shadow:0 0 15px rgba(0,0,0,.25);
+  background-color: var(--accent);
+  color: #000;
+  -webkit-text-stroke: 2px #fff;
+  padding: 10px 24px;
+  border-radius: 28px;
+  font-size: 2.45em;
+  font-weight: 600; /* IMPORTANT: match voorbeeld */
+  box-shadow: 0 0 15px rgba(0,0,0,0.25);
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-/* bestemming */
+/* bestemming: Medium 500 (zoals destination/stops font-weight 500 in voorbeeld) */
 .dest{
-  font-size:2.55em;
-  font-weight:500;
+  font-size: 2.55em;
+  font-weight: 500;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  max-width: 100%;
 }
 
-/* tijd */
+/* tijd: Regular 400 (zoals clock 400, stop-time 0.8em) */
 .time{
-  font-size:2.30em;
-  font-weight:400;
-  color:var(--muted);
-  min-width:110px;
+  font-size: 2.30em;
+  font-weight: 400;
+  color: var(--muted);
   text-align:right;
-  font-variant-numeric:tabular-nums;
+  min-width: 110px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 </style>
 </head>
@@ -137,133 +167,356 @@ body{
   <div class="clock" id="clock">--:--</div>
 </div>
 
-<div class="departures">
-  <div class="list" id="leftList"></div>
-  <div class="list" id="rightList"></div>
+<div class="departures" id="grid">
+  <div class="col" id="colLeft">
+    <div class="list" id="leftList"></div>
+  </div>
+
+  <div class="col" id="colRight">
+    <div class="list" id="rightList"></div>
+  </div>
 </div>
 
 <script>
-const API_KEY="ee23ac060f8a4038ad6d69358d85a1b0";
-const MAX_PER_HALTE=7;
-const COL_SIZE=6;
-const TOTAL_SHOW=12;
-const MAX_AANTAL_API=10;
-const REFRESH_MS=15000;
+/* ================= CONFIG ================= */
+const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
+const MAX_PER_HALTE = 7;
+const COL_SIZE = 6;
+const TOTAL_SHOW = 12;
+const MAX_AANTAL_API = 10;
+const REFRESH_MS = 15000;
+const DEBUG = true;
 
-const $=id=>document.getElementById(id);
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+function log(...args){ if(DEBUG) console.log(...args); }
 
-/* ===== CLOCK ===== */
-function pad(n){return String(n).padStart(2,"0")}
-setInterval(()=>{
- const d=new Date();
- $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
-},1000);
+function pad2(n){ return String(n).padStart(2,'0'); }
+function updateClock(){
+  const now = new Date();
+  $("clock").textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-/* ===== COLOR INVERSION ===== */
-function invertColor(hex){
-  if(!hex) return "#ffffff";
-  hex=hex.replace("#","");
-  if(hex.length===3) hex=hex.split("").map(c=>c+c).join("");
-
-  const r=255-parseInt(hex.substr(0,2),16);
-  const g=255-parseInt(hex.substr(2,2),16);
-  const b=255-parseInt(hex.substr(4,2),16);
-
-  return `rgb(${r},${g},${b})`;
+function parseCSVLine(line){
+  const out = [];
+  let cur = "", inQ = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if(ch === "," && !inQ){
+      out.push(cur); cur = "";
+    } else cur += ch;
+  }
+  out.push(cur);
+  return out;
 }
 
-/* ===== CSV ===== */
-function parseCSV(l){
- let r=[],c="",q=false;
- for(let i=0;i<l.length;i++){
-  const ch=l[i];
-  if(ch=='"'){q=!q}
-  else if(ch==","&&!q){r.push(c);c=""}
-  else c+=ch;
- }
- r.push(c);return r;
+function getStopIdFromUrl(){
+  const p = new URLSearchParams(location.search);
+  return (p.get("stopId") || "").trim();
 }
 
-/* ===== ROUTES ===== */
-let routeMap=new Map();
+function getEntityFromStopId(stopId){
+  const firstChar = stopId[0];
+  const ent = parseInt(firstChar, 10);
+  return Number.isNaN(ent) ? null : ent;
+}
+
+function minutesUntil(iso){
+  const t = new Date(iso).getTime();
+  const now = Date.now();
+  return Math.round((t - now) / 60000);
+}
+function formatMinutes(m){
+  if(m <= 0) return "nu";
+  return `${m}'`;
+}
+
+function normalizeName(s){
+  return (s || "").toLowerCase().replace(/\s+/g," ").trim();
+}
+function cleanStopName(name){
+  if(!name) return "";
+  const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
+  const m = re.exec(name);
+  const cut = m ? name.slice(0, m.index) : name;
+  return cut.replace(/\s+/g," ").trim();
+}
+
+/* === NEW: inverse kleur voor text-stroke === */
+function invertHexColor(color){
+  if(!color) return "#ffffff";
+  let hex = String(color).trim();
+  if(hex.startsWith("rgb")) return "#ffffff";
+  if(hex.startsWith("#")) hex = hex.slice(1);
+  if(hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+  if(hex.length !== 6) return "#ffffff";
+
+  const r = 255 - parseInt(hex.slice(0,2), 16);
+  const g = 255 - parseInt(hex.slice(2,4), 16);
+  const b = 255 - parseInt(hex.slice(4,6), 16);
+
+  const to2 = (n) => n.toString(16).padStart(2,"0");
+  return `#${to2(r)}${to2(g)}${to2(b)}`;
+}
+
+/* ================= ROUTES LOOKUP ================= */
+let routeMap = new Map();
 
 async function loadRoutes(){
- const t=await fetch("./routes.txt").then(r=>r.text());
- const L=t.split(/\r?\n/).filter(l=>l);
- const h=parseCSV(L[0]);
- const id=h.indexOf("route_id");
- const sn=h.indexOf("route_short_name");
- const c=h.indexOf("route_color");
- const tc=h.indexOf("route_text_color");
+  const res = await fetch("./routes.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`routes.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("routes.txt lijkt leeg");
 
- for(let i=1;i<L.length;i++){
-  const r=parseCSV(L[i]);
-  const p=r[id]?.slice(0,4);
-  if(!routeMap.has(p))
-   routeMap.set(p,{
-     short:r[sn],
-     bg:r[c],
-     fg:r[tc]
-   });
- }
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
+
+  const iRouteId = idx("route_id");
+  const iShort   = idx("route_short_name");
+  const iColor   = idx("route_color");
+  const iTextCol = idx("route_text_color");
+
+  if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist route_id/route_short_name");
+
+  const map = new Map();
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
+
+    const routeIdRaw = (row[iRouteId] ?? "").replace(/^"|"$/g,"");
+    if(routeIdRaw.length < 4) continue;
+
+    const prefix4 = routeIdRaw.slice(0,4);
+    if(!map.has(prefix4)){
+      map.set(prefix4, {
+        shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
+        color: (row[iColor] ?? "").replace(/^"|"$/g,""),
+        textColor: (row[iTextCol] ?? "").replace(/^"|"$/g,"")
+      });
+    }
+  }
+  routeMap = map;
+  log("[routes] prefixes:", routeMap.size);
 }
 
-/* ===== API ===== */
-function ent(id){return parseInt(id[0])}
+function getRouteBadge(doorkomst){
+  const entiteit = Number(doorkomst.entiteitnummer);
+  const lijnnr = Number(doorkomst.lijnnummer);
 
-async function fetchStop(id){
- const u=`https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent(id)}_${id}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
- const d=await fetch(u,{headers:{"Ocp-Apim-Subscription-Key":API_KEY}}).then(r=>r.json());
- return d.halteDoorkomstenLijst?.flatMap(x=>x.halteDoorkomsten)||[];
+  const routeKeyNum = (entiteit * 1000) + lijnnr;
+  const prefix4 = String(routeKeyNum).padStart(4,"0").slice(0,4);
+
+  const route = routeMap.get(prefix4) || null;
+  const shortName = route?.shortName || String(lijnnr);
+  const bg = route?.color ? `#${route.color}` : null;
+  const fg = route?.textColor ? `#${route.textColor}` : null;
+
+  return { shortName, bg, fg };
 }
 
-/* ===== RENDER ===== */
-function render(el,arr){
- el.innerHTML=arr.map(d=>{
-  const k=String(ent(d.entiteitnummer)*1000+d.lijnnummer).slice(0,4);
-  const r=routeMap.get(k)||{};
-  const bg=r.bg?`#${r.bg}`:"var(--accent)";
-  const fg=r.fg?`#${r.fg}`:"#000";
-  const stroke=invertColor(fg);
+/* ================= STOPS LOOKUP ================= */
+let stopIdToName = new Map();
+let cleanGroup = new Map();
 
-  const iso=d["real-timeTijdstip"]||d.dienstregelingTijdstip;
-  const min=Math.round((new Date(iso)-Date.now())/60000);
-  const t=min<=0?"nu":`${min}'`;
+async function loadStops(){
+  const res = await fetch("./stops.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`stops.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("stops.txt lijkt leeg");
 
-  return `
-  <div class="row">
-   <div class="left">
-    <span class="line-box"
-      style="
-        background:${bg};
-        color:${fg};
-        -webkit-text-stroke:2px ${stroke};
-      ">${r.short||d.lijnnummer}</span>
-    <span class="dest">${d.bestemming}</span>
-   </div>
-   <div class="time">${t}</div>
-  </div>`;
- }).join("");
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
+
+  const iStopId = idx("stop_id");
+  const iStopName = idx("stop_name");
+  if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
+
+  const idToName = new Map();
+  const group = new Map();
+
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
+
+    const stopId = (row[iStopId] ?? "").replace(/^"|"$/g,"").trim();
+    const stopName = (row[iStopName] ?? "").replace(/^"|"$/g,"").trim();
+    if(!stopId) continue;
+
+    idToName.set(stopId, stopName);
+
+    const cleaned = cleanStopName(stopName);
+    const norm = normalizeName(cleaned);
+    if(!norm) continue;
+
+    if(!group.has(norm)) group.set(norm, { displayName: cleaned, stopIds: [] });
+    group.get(norm).stopIds.push(stopId);
+  }
+
+  stopIdToName = idToName;
+  cleanGroup = group;
+  log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
 }
 
-/* ===== MAIN ===== */
-async function load(){
- await loadRoutes();
- const stop=new URLSearchParams(location.search).get("stopId");
- if(!stop) return;
+/* ================= API: per stop fetch ================= */
+async function fetchRealtimeForSingleStop(stopId){
+  const ent = getEntityFromStopId(stopId);
+  if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
 
- $("title").textContent=`Overstappen aan ${stop}`;
+  const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
+  log("[api-single] url:", url);
 
- const blocks=await fetchStop(stop);
- const all=blocks.flatMap(b=>b.doorkomsten.slice(0,MAX_PER_HALTE))
-  .sort((a,b)=>new Date(a["real-timeTijdstip"]||a.dienstregelingTijdstip)-new Date(b["real-timeTijdstip"]||b.dienstregelingTijdstip));
+  try{
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache",
+        "Ocp-Apim-Subscription-Key": API_KEY
+      }
+    });
 
- render(leftList,all.slice(0,COL_SIZE));
- render(rightList,all.slice(COL_SIZE,TOTAL_SHOW));
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      return { stopId, blocks: [], error: `HTTP ${res.status} — ${t.slice(0,160)}` };
+    }
+
+    const data = await res.json();
+    const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
+    const blocks = [];
+    for(const item of lijst){
+      const b = item?.halteDoorkomsten || [];
+      for(const hd of b) blocks.push(hd);
+    }
+    return { stopId, blocks, error: null };
+  }catch(e){
+    return { stopId, blocks: [], error: String(e?.message || e) };
+  }
 }
 
-load();
-setInterval(load,REFRESH_MS);
+/* ================= RENDER ================= */
+function renderList(el, items){
+  if(!items.length){
+    el.innerHTML = `
+      <div class="row">
+        <div class="left"><span class="dest">Geen doorkomsten</span></div>
+        <div class="time">—</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = items.map((d) => {
+    const { shortName, bg, fg } = getRouteBadge(d);
+
+    const background = bg || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const color = fg || "#000";
+    const stroke = invertHexColor(color);
+
+    const bestemming = (d.bestemming ?? "—").trim() || "—";
+    const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+    const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+
+    return `
+      <div class="row">
+        <div class="left">
+          <span class="line-box" style="background-color:${background};color:${color};-webkit-text-stroke:2px ${stroke};">${shortName}</span>
+          <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+        </div>
+        <div class="time">${vertrekTxt}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* ================= MAIN ================= */
+async function loadBoard(){
+  const stopId = getStopIdFromUrl();
+
+  if(!stopId){
+    $("title").textContent = "Overstappen aan —";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    return;
+  }
+
+  const rawName = stopIdToName.get(stopId) || "";
+  const cleaned = cleanStopName(rawName);
+  const norm = normalizeName(cleaned);
+
+  const displayName = cleaned || "—";
+  $("title").textContent = `Overstappen aan ${displayName}`;
+  document.title = `Overstappen aan ${displayName}`;
+
+  let groupStopIds = [];
+  if(norm && cleanGroup.has(norm)){
+    groupStopIds = cleanGroup.get(norm).stopIds.slice();
+  } else {
+    groupStopIds = [stopId];
+  }
+  if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
+
+  log("[grouping] stopIds:", groupStopIds);
+
+  const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
+
+  const all = [];
+  for(const r of results){
+    for(const hd of r.blocks){
+      const dks = hd?.doorkomsten || [];
+      const sliced = dks.slice(0, MAX_PER_HALTE);
+      for(const d of sliced) all.push(d);
+    }
+  }
+
+  if(!all.length){
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    return;
+  }
+
+  all.sort((a,b)=>{
+    const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
+    const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
+    return ta - tb;
+  });
+
+  const show = all.slice(0, TOTAL_SHOW);
+  const left = show.slice(0, COL_SIZE);
+  const right = show.slice(COL_SIZE, COL_SIZE*2);
+
+  renderList($("leftList"), left);
+
+  if(right.length === 0){
+    $("colRight").style.display = "none";
+  } else {
+    $("colRight").style.display = "";
+    renderList($("rightList"), right);
+  }
+}
+
+/* ================= BOOT ================= */
+(async () => {
+  try{
+    await Promise.all([loadRoutes(), loadStops()]);
+  }catch(e){
+    console.error(e);
+    $("title").textContent = "Overstappen aan —";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    return;
+  }
+
+  await loadBoard();
+  setInterval(loadBoard, REFRESH_MS);
+})();
 </script>
 </body>
 </html>
