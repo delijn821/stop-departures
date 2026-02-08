@@ -4,108 +4,175 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Overstappen</title>
+
   <style>
     :root{
       --accent:#FFCC11;
-      --bg:#0b0f14;
-      --panel:#101722;
-      --line:#1b2633;
-      --text:#e8eef6;
-      --muted:rgba(232,238,246,.72);
+      --bg:#070a0f;
+      --panel:#0e1520;
+      --panel2:#0c121b;
+      --line:#233246;
+      --text:#f3f6fb;
+      --muted:rgba(243,246,251,.78);
+      --muted2:rgba(243,246,251,.60);
+
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 18px; /* basis groter voor leesbaarheid */
     }
+
     html,body{height:100%;}
-    body{margin:0;background:var(--bg);color:var(--text);}
+    body{
+      margin:0;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
     header{
-      padding:18px 18px 14px 18px;
-      border-bottom:2px solid rgba(255,204,17,.35);
-      background:linear-gradient(180deg, rgba(255,204,17,.10), transparent 65%);
-    }
-    h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:.02em;
-      font-weight:800;
+      padding: 22px 22px 18px 22px;
+      border-bottom: 2px solid rgba(255,204,17,.45);
+      background:
+        radial-gradient(1200px 300px at 20% 0%, rgba(255,204,17,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,204,17,.08), transparent 70%);
     }
 
-    main{max-width:980px;margin:0 auto;padding:18px;}
+    h1{
+      margin:0;
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: .01em;
+      font-weight: 900;
+    }
+    .subline{
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--muted2);
+    }
+
+    main{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px;
+    }
 
     table{
       width:100%;
-      border-collapse:separate;border-spacing:0;
-      overflow:hidden;border-radius:16px;
-      border:1px solid var(--line);
-      background:var(--panel);
+      border-collapse:separate;
+      border-spacing:0;
+      border-radius: 18px;
+      overflow:hidden;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
     }
+
     thead th{
-      text-align:left;font-size:12px;letter-spacing:.03em;
-      text-transform:uppercase;color:rgba(232,238,246,.78);
-      padding:12px 12px;border-bottom:1px solid var(--line);
-      background:rgba(0,0,0,.12);
+      text-align:left;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(243,246,251,.80);
+      padding: 16px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel2);
     }
+
     tbody td{
-      padding:12px 12px;border-bottom:1px solid rgba(27,38,51,.85);
-      font-size:15px;
+      padding: 16px 16px;
+      border-bottom: 1px solid rgba(35,50,70,.85);
+      font-size: 20px;
+      line-height: 1.2;
+      vertical-align: middle;
     }
     tbody tr:last-child td{border-bottom:none;}
-    tbody tr:hover{background:rgba(255,255,255,.02);}
+    tbody tr:hover{background: rgba(255,255,255,.02);}
 
     .badge{
-      display:inline-block;
-      padding:6px 10px;border-radius:12px;
-      font-weight:900;letter-spacing:.02em;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-weight: 950;
+      letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
-      min-width:52px;text-align:center;
-      border:1px solid rgba(255,255,255,.12);
+      min-width: 76px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
     }
     .badge.fallback{
-      background:rgba(255,204,17,.18);
-      color:#111;
-      border-color:rgba(255,204,17,.40);
+      background: rgba(255,204,17,.20);
+      color: #111;
+      border-color: rgba(255,204,17,.45);
     }
-    .dest{font-weight:650;}
+
+    .dest{
+      font-weight: 750;
+    }
+
     .depart{
       font-variant-numeric: tabular-nums;
-      font-weight:900;
-      white-space:nowrap;
+      font-weight: 950;
+      white-space: nowrap;
+      font-size: 22px;
     }
-    .muted{color:var(--muted);font-size:12px;}
+
+    .muted{
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hint{
+      margin-top: 14px;
+      color: var(--muted2);
+      font-size: 14px;
+    }
   </style>
 </head>
 
 <body>
 <header>
   <h1 id="title">Overstappen aan —</h1>
+  <div class="subline" id="subline">—</div>
 </header>
 
 <main>
-  <table aria-label="Doorkomsten tabel">
+  <table aria-label="Doorkomsten">
     <thead>
       <tr>
-        <th style="width:110px;">Lijn</th>
+        <th style="width:160px;">Lijn</th>
         <th>Bestemming</th>
-        <th style="width:140px;">Vertrek</th>
+        <th style="width:160px;">Vertrek</th>
       </tr>
     </thead>
     <tbody id="rows">
       <tr><td colspan="3" class="muted">Laden…</td></tr>
     </tbody>
   </table>
+
+  <div class="hint">
+    Gebruik: <strong style="color:var(--accent);">…/?stopId=123456</strong> • Console bevat logging voor grouping/matches.
+  </div>
 </main>
 
 <script>
-  // ========= CONFIG =========
-  const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
-  const MAX_AANTAL = 10;
+  // ================= CONFIG =================
+  const API_KEY = "VUL_HIER_JE_KEY_IN";
+  const MAX_PER_HALTE = 7;     // max doorkomsten per halte/perron (per blok uit API)
+  const MAX_AANTAL_API = 10;   // API parameter (mag hoger, wij knippen zelf)
   const REFRESH_MS = 15000;
 
-  // ========= HELPERS =========
+  // Zet dit op false als je console clean wil
+  const DEBUG = true;
+
+  // ================= HELPERS =================
   const $ = (id) => document.getElementById(id);
-  const pad2 = (n) => String(n).padStart(2, "0");
+
+  function log(...args){ if(DEBUG) console.log(...args); }
 
   function parseCSVLine(line){
-    // simpele CSV parser met quotes (voldoende voor GTFS)
+    // eenvoudige CSV parser met quotes (voldoende voor GTFS)
     const out = [];
     let cur = "", inQ = false;
     for(let i=0;i<line.length;i++){
@@ -131,7 +198,6 @@
   }
 
   function formatMinutes(m){
-    // altijd x' (ook als negatief)
     if(m <= 0) return "nu";
     return `${m}'`;
   }
@@ -147,23 +213,27 @@
     return Number.isNaN(ent) ? null : ent;
   }
 
+  function normalizeName(s){
+    // voor matching: lowercase + whitespace normalisatie
+    return (s || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   function cleanStopName(name){
     if(!name) return "";
     // knip vanaf: " perron", " opstaphalte", " afstaphalte", " quai", "," of "("
     const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
     const m = re.exec(name);
     const cut = m ? name.slice(0, m.index) : name;
-    return cut.trim();
+    // extra whitespace opruimen
+    return cut.replace(/\s+/g, " ").trim();
   }
 
-  // ========= GTFS LOOKUPS =========
-  // routes: prefix4 -> { shortName, color, textColor }
+  // ================= ROUTES LOOKUP =================
+  // Map: prefix4 -> { shortName, color, textColor }
   let routeMap = new Map();
-  // stops:
-  //  - stopId -> rawName
-  //  - cleanName -> [stopId, ...]
-  let stopIdToName = new Map();
-  let cleanNameToStopIds = new Map();
 
   async function loadRoutes(){
     const res = await fetch("./routes.txt", { cache: "no-store" });
@@ -192,6 +262,7 @@
       if(routeIdRaw.length < 4) continue;
 
       const prefix4 = routeIdRaw.slice(0,4);
+      // "eerste resultaat" wint
       if(!map.has(prefix4)){
         map.set(prefix4, {
           shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
@@ -201,7 +272,14 @@
       }
     }
     routeMap = map;
+    log("[routes] prefixes:", routeMap.size);
   }
+
+  // ================= STOPS LOOKUP =================
+  // stopId -> rawName
+  let stopIdToName = new Map();
+  // normalizedCleanName -> { displayName, stopIds[] }
+  let cleanGroup = new Map();
 
   async function loadStops(){
     const res = await fetch("./stops.txt", { cache: "no-store" });
@@ -219,7 +297,7 @@
     if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
 
     const idToName = new Map();
-    const cleanToIds = new Map();
+    const group = new Map();
 
     for(let li=1; li<lines.length; li++){
       const row = parseCSVLine(lines[li]);
@@ -231,21 +309,23 @@
 
       idToName.set(stopId, stopName);
 
-      const clean = cleanStopName(stopName);
-      if(!clean) continue;
+      const cleaned = cleanStopName(stopName);
+      const norm = normalizeName(cleaned);
+      if(!norm) continue;
 
-      if(!cleanToIds.has(clean)) cleanToIds.set(clean, []);
-      cleanToIds.get(clean).push(stopId);
+      if(!group.has(norm)) group.set(norm, { displayName: cleaned, stopIds: [] });
+      group.get(norm).stopIds.push(stopId);
     }
 
     stopIdToName = idToName;
-    cleanNameToStopIds = cleanToIds;
+    cleanGroup = group;
+
+    log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
   }
 
-  // ========= API FETCH =========
+  // ================= BUILD LIST KEY =================
   function buildHaltesLijstKey(stopIds){
-    // "2_212223_2_212224" (entiteit = eerste cijfer stopId)
-    // behoud volgorde zoals in stops.txt (die pushen we al in file-volgorde)
+    // "2_212223_2_212224"
     const parts = [];
     for(const sid of stopIds){
       const ent = getEntityFromStopId(sid);
@@ -268,34 +348,58 @@
     const bg = route?.color ? `#${route.color}` : null;
     const fg = route?.textColor ? `#${route.textColor}` : null;
 
-    return { shortName, bg, fg };
+    return { shortName, bg, fg, prefix4 };
   }
 
+  // ================= MAIN =================
   async function loadBoard(){
     const stopId = getStopIdFromUrl();
 
     if(!stopId){
       $("title").textContent = "Overstappen";
+      $("subline").textContent = "Geen stopId in de URL.";
       $("rows").innerHTML = `<tr><td colspan="3" class="muted">Gebruik ?stopId=123456</td></tr>`;
       return;
     }
 
     const rawName = stopIdToName.get(stopId) || "";
-    const cleanName = cleanStopName(rawName) || "—";
+    const cleaned = cleanStopName(rawName);
+    const norm = normalizeName(cleaned);
 
-    $("title").textContent = `Overstappen aan ${cleanName}`;
-    document.title = `Overstappen aan ${cleanName}`;
+    // Fallbacks als stopId niet in stops.txt zit
+    const displayName = cleaned || "—";
+    $("title").textContent = `Overstappen aan ${displayName}`;
+    document.title = `Overstappen aan ${displayName}`;
 
-    // alle stop_ids met dezelfde ingekorte naam
-    const groupStopIds = cleanNameToStopIds.get(cleanName) || [stopId];
+    // Groep stop_ids (zelfde ingekorte naam)
+    let groupStopIds = [];
+    if(norm && cleanGroup.has(norm)){
+      groupStopIds = cleanGroup.get(norm).stopIds.slice();
+    } else {
+      groupStopIds = [stopId];
+    }
+
+    // Zorg dat het originele stopId zeker mee in de groep zit
+    if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
+
+    // Logging om te debuggen waarom grouping faalt
+    log("[grouping] stopId:", stopId);
+    log("[grouping] rawName:", rawName);
+    log("[grouping] cleaned:", cleaned, "norm:", norm);
+    log("[grouping] stopIds:", groupStopIds);
+
+    $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
 
     const key = buildHaltesLijstKey(groupStopIds);
+    log("[api] haltes/lijst key:", key);
+
     if(!key){
       $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen geldige stop_ids gevonden.</td></tr>`;
       return;
     }
 
-    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${key}/real-time?maxAantalDoorkomsten=${MAX_AANTAL}`;
+    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${key}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
+    log("[api] url:", url);
 
     try{
       const res = await fetch(url, {
@@ -313,12 +417,17 @@
 
       const data = await res.json();
 
-      // De API kan meerdere halteDoorkomsten-blokken geven; we flatten alles samen
-      const lijst = data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten || [];
+      // Meerdere halteDoorkomsten: per halte maximaal 7 nemen, dan flatten
+      const blocks = data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten || [];
+      log("[api] blocks:", blocks.length);
+
       const all = [];
-      for(const hd of lijst){
+      for(const hd of blocks){
         const dks = hd?.doorkomsten || [];
-        for(const d of dks) all.push(d);
+        // max 7 per halte/perron
+        const sliced = dks.slice(0, MAX_PER_HALTE);
+        log("[api] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
+        for(const d of sliced) all.push(d);
       }
 
       if(!all.length){
@@ -326,23 +435,37 @@
         return;
       }
 
+      // sorteer op (realtime of dienstregeling)
       all.sort((a,b)=>{
         const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
         const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
         return ta - tb;
       });
 
+      // render
       const rowsHtml = all.map(d => {
-        const { shortName, bg, fg } = getRouteBadge(d);
+        const { shortName, bg, fg, prefix4 } = getRouteBadge(d);
 
         const badgeStyle = bg ? `background:${bg};color:${fg || "#000"};` : ``;
         const badgeClass = bg ? "badge" : "badge fallback";
 
         const bestemming = d.bestemming ?? "—";
 
-        // Vertrek altijd x' — realtime indien beschikbaar, anders dienstregeling
+        // Altijd x' — realtime indien beschikbaar, anders dienstregeling
         const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
         const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+
+        // extra debug per rij (optioneel)
+        if(DEBUG){
+          log("[row]",
+            "lijnnr", d.lijnnummer,
+            "ent", d.entiteitnummer,
+            "prefix4", prefix4,
+            "short", shortName,
+            "best", bestemming,
+            "vertrek", vertrekTxt
+          );
+        }
 
         return `
           <tr>
@@ -361,14 +484,15 @@
     }
   }
 
-  // ========= BOOT =========
+  // ================= BOOT =================
   (async () => {
     try{
       await Promise.all([loadRoutes(), loadStops()]);
-    }catch(e){
+    } catch(e){
       console.error(e);
       $("title").textContent = "Overstappen";
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">GTFS bestanden konden niet geladen worden.</td></tr>`;
+      $("subline").textContent = "GTFS bestanden konden niet geladen worden.";
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Controleer of routes.txt en stops.txt in de root staan.</td></tr>`;
       return;
     }
 
