@@ -168,7 +168,6 @@
 
   // ================= HELPERS =================
   const $ = (id) => document.getElementById(id);
-
   function log(...args){ if(DEBUG) console.log(...args); }
 
   function parseCSVLine(line){
@@ -323,18 +322,7 @@
     log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
   }
 
-  // ================= BUILD LIST KEY =================
-  function buildHaltesLijstKey(stopIds){
-    // "2_212223_2_212224"
-    const parts = [];
-    for(const sid of stopIds){
-      const ent = getEntityFromStopId(sid);
-      if(ent === null) continue;
-      parts.push(`${ent}_${sid}`);
-    }
-    return parts.join("_");
-  }
-
+  // ================= ROUTE BADGE =================
   function getRouteBadge(doorkomst){
     const entiteit = Number(doorkomst.entiteitnummer);
     const lijnnr = Number(doorkomst.lijnnummer);
@@ -349,6 +337,44 @@
     const fg = route?.textColor ? `#${route.textColor}` : null;
 
     return { shortName, bg, fg, prefix4 };
+  }
+
+  // ================= API: PER STOP FETCH (FIX) =================
+  async function fetchRealtimeForSingleStop(stopId){
+    const ent = getEntityFromStopId(stopId);
+    if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
+
+    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
+    log("[api-single] url:", url);
+
+    try{
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Ocp-Apim-Subscription-Key": API_KEY
+        }
+      });
+
+      if(!res.ok){
+        const t = await res.text().catch(()=> "");
+        return { stopId, blocks: [], error: `HTTP ${res.status} — ${t.slice(0,160)}` };
+      }
+
+      const data = await res.json();
+
+      // kan meerdere items in halteDoorkomstenLijst hebben
+      const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
+      const blocks = [];
+      for(const item of lijst){
+        const b = item?.halteDoorkomsten || [];
+        for(const hd of b) blocks.push(hd);
+      }
+
+      return { stopId, blocks, error: null };
+    }catch(e){
+      return { stopId, blocks: [], error: String(e?.message || e) };
+    }
   }
 
   // ================= MAIN =================
@@ -366,7 +392,6 @@
     const cleaned = cleanStopName(rawName);
     const norm = normalizeName(cleaned);
 
-    // Fallbacks als stopId niet in stops.txt zit
     const displayName = cleaned || "—";
     $("title").textContent = `Overstappen aan ${displayName}`;
     document.title = `Overstappen aan ${displayName}`;
@@ -378,11 +403,8 @@
     } else {
       groupStopIds = [stopId];
     }
-
-    // Zorg dat het originele stopId zeker mee in de groep zit
     if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
 
-    // Logging om te debuggen waarom grouping faalt
     log("[grouping] stopId:", stopId);
     log("[grouping] rawName:", rawName);
     log("[grouping] cleaned:", cleaned, "norm:", norm);
@@ -390,98 +412,71 @@
 
     $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
 
-    const key = buildHaltesLijstKey(groupStopIds);
-    log("[api] haltes/lijst key:", key);
+    // 🔥 FIX: fetch PER STOP en merge
+    const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
 
-    if(!key){
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen geldige stop_ids gevonden.</td></tr>`;
+    for(const r of results){
+      if(r.error) log("[api-single] ERROR for", r.stopId, r.error);
+      log("[api-single] stopId", r.stopId, "blocks", r.blocks.length);
+    }
+
+    // Flatten: per halteblock max 7 doorkomsten
+    const all = [];
+    for(const r of results){
+      for(const hd of r.blocks){
+        const dks = hd?.doorkomsten || [];
+        const sliced = dks.slice(0, MAX_PER_HALTE);
+        log("[api-single] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
+        for(const d of sliced) all.push(d);
+      }
+    }
+
+    if(!all.length){
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen doorkomsten.</td></tr>`;
       return;
     }
 
-    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${key}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
-    log("[api] url:", url);
+    // sorteer op (realtime of dienstregeling)
+    all.sort((a,b)=>{
+      const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
+      const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
+      return ta - tb;
+    });
 
-    try{
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Ocp-Apim-Subscription-Key": API_KEY
-        }
-      });
+    // render
+    const rowsHtml = all.map(d => {
+      const { shortName, bg, fg, prefix4 } = getRouteBadge(d);
 
-      if(!res.ok){
-        const t = await res.text().catch(()=> "");
-        throw new Error(`API fout: HTTP ${res.status} — ${t.slice(0,160)}`);
+      const badgeStyle = bg ? `background:${bg};color:${fg || "#000"};` : ``;
+      const badgeClass = bg ? "badge" : "badge fallback";
+
+      const bestemming = d.bestemming ?? "—";
+
+      // Altijd x' — realtime indien beschikbaar, anders dienstregeling
+      const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+      const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+
+      if(DEBUG){
+        log("[row]",
+          "lijnnr", d.lijnnummer,
+          "ent", d.entiteitnummer,
+          "prefix4", prefix4,
+          "short", shortName,
+          "best", bestemming,
+          "vertrek", vertrekTxt
+        );
       }
 
-      const data = await res.json();
+      return `
+        <tr>
+          <td><span class="${badgeClass}" style="${badgeStyle}">${shortName}</span></td>
+          <td class="dest">${bestemming}</td>
+          <td class="depart">${vertrekTxt}</td>
+        </tr>
+      `;
+    }).join("");
 
-      // Meerdere halteDoorkomsten: per halte maximaal 7 nemen, dan flatten
-      const blocks = data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten || [];
-      log("[api] blocks:", blocks.length);
-
-      const all = [];
-      for(const hd of blocks){
-        const dks = hd?.doorkomsten || [];
-        // max 7 per halte/perron
-        const sliced = dks.slice(0, MAX_PER_HALTE);
-        log("[api] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
-        for(const d of sliced) all.push(d);
-      }
-
-      if(!all.length){
-        $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen doorkomsten.</td></tr>`;
-        return;
-      }
-
-      // sorteer op (realtime of dienstregeling)
-      all.sort((a,b)=>{
-        const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
-        const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
-        return ta - tb;
-      });
-
-      // render
-      const rowsHtml = all.map(d => {
-        const { shortName, bg, fg, prefix4 } = getRouteBadge(d);
-
-        const badgeStyle = bg ? `background:${bg};color:${fg || "#000"};` : ``;
-        const badgeClass = bg ? "badge" : "badge fallback";
-
-        const bestemming = d.bestemming ?? "—";
-
-        // Altijd x' — realtime indien beschikbaar, anders dienstregeling
-        const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-        const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
-
-        // extra debug per rij (optioneel)
-        if(DEBUG){
-          log("[row]",
-            "lijnnr", d.lijnnummer,
-            "ent", d.entiteitnummer,
-            "prefix4", prefix4,
-            "short", shortName,
-            "best", bestemming,
-            "vertrek", vertrekTxt
-          );
-        }
-
-        return `
-          <tr>
-            <td><span class="${badgeClass}" style="${badgeStyle}">${shortName}</span></td>
-            <td class="dest">${bestemming}</td>
-            <td class="depart">${vertrekTxt}</td>
-          </tr>
-        `;
-      }).join("");
-
-      $("rows").innerHTML = rowsHtml;
-
-    } catch(err){
-      console.error(err);
-      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Fout: ${String(err.message || err)}</td></tr>`;
-    }
+    $("rows").innerHTML = rowsHtml;
   }
 
   // ================= BOOT =================
