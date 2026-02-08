@@ -6,17 +6,38 @@
 <title>Overstappen</title>
 
 <style>
+/* Fonts identiek geladen zoals in halte_scherm.html :contentReference[oaicite:1]{index=1} */
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Bold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root{
   --bg:#111;
   --text:#fff;
   --muted:#ddd;
   --accent:#FFCC11;
+  --divider: rgba(255,255,255,.14);
 }
 
 *{ box-sizing: border-box; }
 
 body{
-  font-family: Arial, sans-serif;
+  font-family: 'FlandersArtSans', Arial, sans-serif;
   background-color: var(--bg);
   color: var(--text);
   height: 100vh;
@@ -40,7 +61,7 @@ body{
 
 .title{
   font-size: 3.75em;
-  font-weight: 600;
+  font-weight: 500; /* zoals destination in voorbeeld */
   letter-spacing: .01em;
 }
 
@@ -80,19 +101,18 @@ body{
   padding: 10px 0;
 }
 
-/* rijkaart: geen achtergrondvlak meer */
+/* rij: geen achtergrondvlak */
 .row{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  background: transparent;     /* <-- weg */
-  border-radius: 0;            /* <-- weg */
-  padding: 10px 0;             /* luchtiger */
+  background: transparent;
+  padding: 10px 0;
 }
 
-/* optionele subtiele scheidingslijn */
+/* subtiele scheidingslijn */
 .row + .row{
-  border-top: 2px solid rgba(255,255,255,.14);
+  border-top: 2px solid var(--divider);
   padding-top: 22px;
 }
 
@@ -103,34 +123,34 @@ body{
   min-width: 0;
 }
 
-/* grotere lijnbadge */
+/* lijnbadge: Bold 600, zoals in voorbeeld line-box */
 .line-box{
   background-color: var(--accent);
   color: #000;
   -webkit-text-stroke: 2px #fff;
   padding: 10px 24px;
   border-radius: 28px;
-  font-size: 2.45em;     /* groter */
-  font-weight: 800;
+  font-size: 2.45em;
+  font-weight: 600; /* IMPORTANT: match voorbeeld */
   box-shadow: 0 0 15px rgba(0,0,0,0.25);
   line-height: 1.1;
   white-space: nowrap;
 }
 
-/* grotere bestemming */
+/* bestemming: Medium 500 (zoals destination/stops font-weight 500 in voorbeeld) */
 .dest{
-  font-size: 2.55em;     /* groter */
-  font-weight: 650;
+  font-size: 2.55em;
+  font-weight: 500;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
   max-width: 100%;
 }
 
-/* grotere tijd */
+/* tijd: Regular 400 (zoals clock 400, stop-time 0.8em) */
 .time{
-  font-size: 2.30em;     /* groter */
-  font-weight: 500;
+  font-size: 2.30em;
+  font-weight: 400;
   color: var(--muted);
   text-align:right;
   min-width: 110px;
@@ -365,7 +385,11 @@ async function fetchRealtimeForSingleStop(stopId){
 /* ================= RENDER ================= */
 function renderList(el, items){
   if(!items.length){
-    el.innerHTML = `<div class="row"><div class="left"><span class="dest">Geen doorkomsten</span></div><div class="time">—</div></div>`;
+    el.innerHTML = `
+      <div class="row">
+        <div class="left"><span class="dest">Geen doorkomsten</span></div>
+        <div class="time">—</div>
+      </div>`;
     return;
   }
 
