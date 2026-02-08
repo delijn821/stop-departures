@@ -1,618 +1,596 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overstappen</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Overstappen</title>
 
-  <style>
-    :root{
-      --accent:#FFCC11;
+<style>
+/* Layout & look gebaseerd op het bijgevoegde halte_scherm.html :contentReference[oaicite:0]{index=0} */
 
-      --bg0:#06080c;
-      --bg1:#0b0f16;
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Bold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
 
-      --panel:#202326;
-      --panel2:#2a2d31;
+:root{
+  --bg:#111;
+  --card:#333;
+  --card2:#2e2e2e;
+  --text:#fff;
+  --muted:#ccc;
+  --line:#444;
+  --accent:#FFCC11;
+}
 
-      --line:#2c3442;
-      --text:#f4f6fb;
-      --muted:rgba(244,246,251,.78);
-      --muted2:rgba(244,246,251,.60);
+*{ box-sizing: border-box; }
 
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      font-size: 18px;
-    }
+body{
+  font-family: 'FlandersArtSans', Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  padding-top: 2.75%;
+  padding-left: 5%;
+  padding-right: 5%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
 
-    html,body{height:100%;}
-    body{
-      margin:0;
-      background:
-        radial-gradient(900px 500px at 18% 0%, rgba(255,204,17,.16), transparent 62%),
-        radial-gradient(900px 500px at 85% 0%, rgba(255,255,255,.06), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+/* ===== Header (zelfde vibe) ===== */
+.header{
+  width: 100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-    /* ===== Header (like the screenshot vibe) ===== */
-    header{
-      padding: 28px 28px 20px 28px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-    .header-row{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:16px;
-      flex-wrap:wrap;
-    }
-    h1{
-      margin:0;
-      font-size: 46px;
-      line-height: 1.05;
-      letter-spacing: .01em;
-      font-weight: 950;
-      text-shadow: 0 2px 12px rgba(0,0,0,.35);
-    }
-    .clock{
-      font-variant-numeric: tabular-nums;
-      font-size: 44px;
-      line-height: 1;
-      font-weight: 500;
-      opacity: .96;
-      text-shadow: 0 2px 12px rgba(0,0,0,.35);
-      white-space:nowrap;
-    }
-    .subline{
-      margin-top: 10px;
-      font-size: 15px;
-      color: var(--muted2);
-    }
+.title{
+  font-size: 3.75em;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
 
-    main{
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 26px 28px 34px 28px;
-    }
+.clock{
+  font-size: 3.5em;
+  font-weight: 400;
+}
 
-    /* ===== Two tables side-by-side ===== */
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items:start;
-    }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      h1{ font-size: 34px; }
-      .clock{ font-size: 34px; }
-    }
+/* ===== 2 kolommen in dezelfde "stops" stijl ===== */
+.departures{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+  margin-top: 2.75%;
+  flex-grow: 1;
+  overflow: hidden;
+}
 
-    /* Table wrapper like rounded card */
-    .table-card{
-      background: rgba(0,0,0,.10);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 22px;
-      overflow:hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
-    .table-head{
-      padding: 14px 18px;
-      background: rgba(255,255,255,.06);
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-    }
-    .table-head .label{
-      font-size: 13px;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      color: rgba(244,246,251,.82);
-      font-weight: 800;
-    }
-    .table-head .count{
-      font-size: 13px;
-      color: var(--muted2);
-      font-variant-numeric: tabular-nums;
-    }
+@media (max-width: 980px){
+  .departures{ grid-template-columns: 1fr; }
+  body{ overflow:auto; }
+}
 
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0 12px; /* "cards" rows */
-      padding: 14px 14px 16px 14px;
-    }
+/* container met timeline zoals in bijlage */
+.col{
+  position: relative;
+  display:flex;
+  flex-direction:column;
+  width: 100%;
+  overflow:hidden;
+}
 
-    /* each row looks like a rounded grey bar */
-    tr{ }
-    td{
-      padding: 18px 18px;
-      font-size: 26px;
-      line-height: 1.1;
-      vertical-align: middle;
-    }
-    .row-card td{
-      background: rgba(255,255,255,.14);
-      border-top: 1px solid rgba(255,255,255,.10);
-      border-bottom: 1px solid rgba(0,0,0,.25);
-    }
-    .row-card td:first-child{ border-radius: 18px 0 0 18px; }
-    .row-card td:last-child{ border-radius: 0 18px 18px 0; }
+.timeline{
+  position:absolute;
+  left: 36px;
+  width: 6px;
+  background-color: #fff;
+  border-radius: 2px;
+  z-index: 0;
+  top: 20px;
+  bottom: 20px;
+  opacity: 0.95;
+}
 
-    /* Layout inside row */
-    .cell-left{
-      width: 140px;
-      padding-right: 10px;
-    }
-    .cell-mid{
-      width: auto;
-      font-weight: 900;
-      letter-spacing: .01em;
-      text-shadow: 0 2px 10px rgba(0,0,0,.22);
-    }
-    .cell-right{
-      width: 120px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      font-weight: 750;
-      opacity: .95;
-      white-space: nowrap;
-    }
+.list{
+  position: relative;
+  z-index: 1;
+  display:flex;
+  flex-direction:column;
+  gap: 15px;
+  overflow:hidden;
+  padding: 10px 0;
+}
 
-    /* Line badge */
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width: 116px;
-      padding: 12px 16px;
-      border-radius: 22px;
-      font-weight: 1000;
-      letter-spacing: .02em;
-      font-variant-numeric: tabular-nums;
-      border: 2px solid rgba(255,255,255,.20);
-      text-shadow: 0 2px 0 rgba(0,0,0,.30);
-      box-shadow: 0 8px 18px rgba(0,0,0,.28);
-    }
-    .badge.fallback{
-      background: rgba(255,204,17,.22);
-      color: #101010;
-      border-color: rgba(255,204,17,.45);
-      text-shadow: none;
-    }
+/* rijkaart zoals .stop in bijlage */
+.row{
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background-color: var(--card);
+  border-radius: 15px;
+  padding: 15px 25px 15px 60px;
+}
 
-    .muted{
-      color: var(--muted);
-      font-size: 15px;
-    }
+.row::before{
+  content:"";
+  position:absolute;
+  left: 25px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--bg);
+  border: 5px solid #fff;
+  border-radius:50%;
+  transform: translateY(-50%);
+  top: 50%;
+}
 
-    .empty{
-      padding: 18px 18px 20px 18px;
-      color: var(--muted);
-      font-size: 16px;
-    }
+/* eerste in elke kolom pulsen */
+.row.first::before{
+  animation: pulse 1.5s infinite;
+}
 
-    /* subtle divider below tables if needed */
-    .footer-hint{
-      margin-top: 14px;
-      color: var(--muted2);
-      font-size: 14px;
-    }
+@keyframes pulse {
+  0%, 100% { transform: translateY(-50%) scale(1.0); }
+  50% { transform: translateY(-50%) scale(1.3); }
+}
 
-    /* Make long destinations truncate nicely */
-    .dest{
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 100%;
-      display:block;
-    }
-  </style>
+.left{
+  display:flex;
+  align-items:center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.line-box{
+  background-color: var(--accent);
+  color: #000;
+  -webkit-text-stroke: 2px #fff; /* zelfde feel */
+  padding: 5px 18px;
+  border-radius: 25px;
+  font-size: 2.2em;
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.dest{
+  font-size: 2.25em;
+  font-weight: 500;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width: 100%;
+}
+
+.time{
+  font-size: 2.0em;
+  font-weight: 400;
+  color: var(--muted);
+  text-align:right;
+  min-width: 90px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Footer in dezelfde stijl */
+.footer{
+  font-size: 3em;
+  font-weight: 500;
+  margin-top: auto;
+  margin-bottom: 3.25%;
+  width: 100%;
+  text-align: center;
+  padding: 2%;
+  border-top: 2px solid var(--line);
+}
+
+/* Kleine statusregel (optioneel, niet schreeuwerig) */
+.sub{
+  font-size: 1.25em;
+  font-weight: 400;
+  color: rgba(255,255,255,.70);
+  margin-top: 0.75%;
+  margin-bottom: 0.25%;
+  width:100%;
+  text-align:left;
+}
+</style>
 </head>
 
 <body>
-<header>
-  <div class="header-row">
-    <h1 id="title">Overstappen aan —</h1>
-    <div class="clock" id="clock">--:--</div>
-  </div>
-  <div class="subline" id="subline">—</div>
-</header>
 
-<main>
-  <div class="grid">
-    <section class="table-card">
-      <div class="table-head">
-        <div class="label">Eerstvolgende 6</div>
-        <div class="count" id="countLeft">0</div>
-      </div>
-      <div id="leftWrap">
-        <table aria-label="Eerstvolgende doorkomsten">
-          <tbody id="rowsLeft">
-            <tr><td class="empty">Laden…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+<div class="header">
+  <div class="title" id="title">Overstappen aan —</div>
+  <div class="clock" id="clock">--:--</div>
+</div>
 
-    <section class="table-card">
-      <div class="table-head">
-        <div class="label">Daarna</div>
-        <div class="count" id="countRight">0</div>
-      </div>
-      <div id="rightWrap">
-        <table aria-label="Volgende doorkomsten">
-          <tbody id="rowsRight">
-            <tr><td class="empty">Laden…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+<div class="sub" id="subline">—</div>
+
+<div class="departures">
+  <div class="col">
+    <div class="timeline"></div>
+    <div class="list" id="leftList"></div>
   </div>
 
-  <div class="footer-hint">
-    Gebruik: <strong style="color:var(--accent);">…/?stopId=123456</strong> • Console bevat logging (DEBUG=true).
+  <div class="col">
+    <div class="timeline"></div>
+    <div class="list" id="rightList"></div>
   </div>
-</main>
+</div>
+
+<div class="footer" id="footer">—</div>
 
 <script>
-  // ================= CONFIG =================
-  const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
-  const MAX_PER_HALTE = 7;       // max doorkomsten per halte/perron (per blok uit API)
-  const MAX_AANTAL_API = 10;     // API parameter
-  const REFRESH_MS = 15000;
+/* ================= CONFIG ================= */
+const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
 
-  // 2 tabellen: links 6, rechts 6
-  const COL_SIZE = 6;
+// Per halte/perron max 7 (zoals eerder gevraagd)
+const MAX_PER_HALTE = 7;
 
-  // logging
-  const DEBUG = true;
+// We tonen 2 kolommen van 6 = 12 entries totaal
+const COL_SIZE = 6;
+const TOTAL_SHOW = 12;
 
-  // ================= HELPERS =================
-  const $ = (id) => document.getElementById(id);
-  function log(...args){ if(DEBUG) console.log(...args); }
+const MAX_AANTAL_API = 10;
+const REFRESH_MS = 15000;
 
-  function pad2(n){ return String(n).padStart(2,"0"); }
-  function setClock(){
-    const d = new Date();
-    $("clock").textContent = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+// logging
+const DEBUG = true;
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+function log(...args){ if(DEBUG) console.log(...args); }
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function updateClock(){
+  const now = new Date();
+  $("clock").textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function parseCSVLine(line){
+  const out = [];
+  let cur = "", inQ = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if(ch === "," && !inQ){
+      out.push(cur); cur = "";
+    } else cur += ch;
   }
+  out.push(cur);
+  return out;
+}
 
-  function parseCSVLine(line){
-    const out = [];
-    let cur = "", inQ = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if(ch === "," && !inQ){
-        out.push(cur); cur = "";
-      } else {
-        cur += ch;
-      }
-    }
-    out.push(cur);
-    return out;
-  }
+function getStopIdFromUrl(){
+  const p = new URLSearchParams(location.search);
+  return (p.get("stopId") || "").trim();
+}
 
-  function minutesUntil(iso){
-    const t = new Date(iso).getTime();
-    const now = Date.now();
-    return Math.round((t - now) / 60000);
-  }
+function getEntityFromStopId(stopId){
+  const firstChar = stopId[0];
+  const ent = parseInt(firstChar, 10);
+  return Number.isNaN(ent) ? null : ent;
+}
 
-  function formatMinutes(m){
-    if(m <= 0) return "nu";
-    return `${m}'`;
-  }
+function minutesUntil(iso){
+  const t = new Date(iso).getTime();
+  const now = Date.now();
+  return Math.round((t - now) / 60000);
+}
+function formatMinutes(m){
+  if(m <= 0) return "nu";
+  return `${m}'`;
+}
 
-  function getStopIdFromUrl(){
-    const p = new URLSearchParams(location.search);
-    return (p.get("stopId") || "").trim();
-  }
+function normalizeName(s){
+  return (s || "").toLowerCase().replace(/\s+/g," ").trim();
+}
+function cleanStopName(name){
+  if(!name) return "";
+  const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
+  const m = re.exec(name);
+  const cut = m ? name.slice(0, m.index) : name;
+  return cut.replace(/\s+/g," ").trim();
+}
 
-  function getEntityFromStopId(stopId){
-    const firstChar = stopId[0];
-    const ent = parseInt(firstChar, 10);
-    return Number.isNaN(ent) ? null : ent;
-  }
+/* ================= ROUTES LOOKUP ================= */
+// prefix4 -> { shortName, color, textColor }
+let routeMap = new Map();
 
-  function normalizeName(s){
-    return (s || "")
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .trim();
-  }
+async function loadRoutes(){
+  const res = await fetch("./routes.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`routes.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("routes.txt lijkt leeg");
 
-  function cleanStopName(name){
-    if(!name) return "";
-    const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
-    const m = re.exec(name);
-    const cut = m ? name.slice(0, m.index) : name;
-    return cut.replace(/\s+/g, " ").trim();
-  }
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
 
-  // ================= ROUTES LOOKUP =================
-  // prefix4 -> { shortName, color, textColor }
-  let routeMap = new Map();
+  const iRouteId = idx("route_id");
+  const iShort   = idx("route_short_name");
+  const iColor   = idx("route_color");
+  const iTextCol = idx("route_text_color");
 
-  async function loadRoutes(){
-    const res = await fetch("./routes.txt", { cache: "no-store" });
-    if(!res.ok) throw new Error(`routes.txt niet gevonden (HTTP ${res.status})`);
-    const txt = await res.text();
+  if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist route_id/route_short_name");
 
-    const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
-    if(lines.length < 2) throw new Error("routes.txt lijkt leeg");
+  const map = new Map();
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
 
-    const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
-    const idx = (name) => header.indexOf(name);
+    const routeIdRaw = (row[iRouteId] ?? "").replace(/^"|"$/g,"");
+    if(routeIdRaw.length < 4) continue;
 
-    const iRouteId = idx("route_id");
-    const iShort   = idx("route_short_name");
-    const iColor   = idx("route_color");
-    const iTextCol = idx("route_text_color");
-
-    if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist route_id/route_short_name");
-
-    const map = new Map();
-    for(let li=1; li<lines.length; li++){
-      const row = parseCSVLine(lines[li]);
-      if(row.length !== header.length) continue;
-
-      const routeIdRaw = (row[iRouteId] ?? "").replace(/^"|"$/g,"");
-      if(routeIdRaw.length < 4) continue;
-
-      const prefix4 = routeIdRaw.slice(0,4);
-      if(!map.has(prefix4)){
-        map.set(prefix4, {
-          shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
-          color: (row[iColor] ?? "").replace(/^"|"$/g,""),
-          textColor: (row[iTextCol] ?? "").replace(/^"|"$/g,"")
-        });
-      }
-    }
-    routeMap = map;
-    log("[routes] prefixes:", routeMap.size);
-  }
-
-  // ================= STOPS LOOKUP =================
-  let stopIdToName = new Map();
-  // normalizedCleanName -> { displayName, stopIds[] }
-  let cleanGroup = new Map();
-
-  async function loadStops(){
-    const res = await fetch("./stops.txt", { cache: "no-store" });
-    if(!res.ok) throw new Error(`stops.txt niet gevonden (HTTP ${res.status})`);
-    const txt = await res.text();
-
-    const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
-    if(lines.length < 2) throw new Error("stops.txt lijkt leeg");
-
-    const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
-    const idx = (name) => header.indexOf(name);
-
-    const iStopId = idx("stop_id");
-    const iStopName = idx("stop_name");
-    if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
-
-    const idToName = new Map();
-    const group = new Map();
-
-    for(let li=1; li<lines.length; li++){
-      const row = parseCSVLine(lines[li]);
-      if(row.length !== header.length) continue;
-
-      const stopId = (row[iStopId] ?? "").replace(/^"|"$/g,"").trim();
-      const stopName = (row[iStopName] ?? "").replace(/^"|"$/g,"").trim();
-      if(!stopId) continue;
-
-      idToName.set(stopId, stopName);
-
-      const cleaned = cleanStopName(stopName);
-      const norm = normalizeName(cleaned);
-      if(!norm) continue;
-
-      if(!group.has(norm)) group.set(norm, { displayName: cleaned, stopIds: [] });
-      group.get(norm).stopIds.push(stopId);
-    }
-
-    stopIdToName = idToName;
-    cleanGroup = group;
-    log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
-  }
-
-  function getRouteBadge(doorkomst){
-    const entiteit = Number(doorkomst.entiteitnummer);
-    const lijnnr = Number(doorkomst.lijnnummer);
-
-    const routeKeyNum = (entiteit * 1000) + lijnnr;
-    const prefix4 = String(routeKeyNum).padStart(4, "0").slice(0,4);
-
-    const route = routeMap.get(prefix4) || null;
-    const shortName = route?.shortName || String(lijnnr);
-
-    const bg = route?.color ? `#${route.color}` : null;
-    const fg = route?.textColor ? `#${route.textColor}` : null;
-
-    return { shortName, bg, fg, prefix4 };
-  }
-
-  // ================= API: PER STOP FETCH (robust) =================
-  async function fetchRealtimeForSingleStop(stopId){
-    const ent = getEntityFromStopId(stopId);
-    if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
-
-    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
-    log("[api-single] url:", url);
-
-    try{
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Ocp-Apim-Subscription-Key": API_KEY
-        }
+    const prefix4 = routeIdRaw.slice(0,4);
+    if(!map.has(prefix4)){
+      map.set(prefix4, {
+        shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
+        color: (row[iColor] ?? "").replace(/^"|"$/g,""),
+        textColor: (row[iTextCol] ?? "").replace(/^"|"$/g,"")
       });
-
-      if(!res.ok){
-        const t = await res.text().catch(()=> "");
-        return { stopId, blocks: [], error: `HTTP ${res.status} — ${t.slice(0,160)}` };
-      }
-
-      const data = await res.json();
-      const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
-      const blocks = [];
-      for(const item of lijst){
-        const b = item?.halteDoorkomsten || [];
-        for(const hd of b) blocks.push(hd);
-      }
-
-      return { stopId, blocks, error: null };
-    }catch(e){
-      return { stopId, blocks: [], error: String(e?.message || e) };
     }
   }
+  routeMap = map;
+  log("[routes] prefixes:", routeMap.size);
+}
 
-  // ================= RENDER =================
-  function renderColumn(tbodyEl, items){
-    if(!items.length){
-      tbodyEl.innerHTML = `<tr><td class="empty">Geen doorkomsten.</td></tr>`;
-      return;
-    }
+function getRouteBadge(doorkomst){
+  const entiteit = Number(doorkomst.entiteitnummer);
+  const lijnnr = Number(doorkomst.lijnnummer);
 
-    const html = items.map(d => {
-      const { shortName, bg, fg } = getRouteBadge(d);
+  // (entiteit*1000)+lijnnr => eerste 4 cijfers
+  const routeKeyNum = (entiteit * 1000) + lijnnr;
+  const prefix4 = String(routeKeyNum).padStart(4,"0").slice(0,4);
 
-      const badgeClass = bg ? "badge" : "badge fallback";
-      const badgeStyle = bg ? `background:${bg};color:${fg || "#fff"};` : "";
+  const route = routeMap.get(prefix4) || null;
+  const shortName = route?.shortName || String(lijnnr);
+  const bg = route?.color ? `#${route.color}` : null;
+  const fg = route?.textColor ? `#${route.textColor}` : null;
 
-      const bestemming = (d.bestemming ?? "—").trim() || "—";
-      const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-      const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+  return { shortName, bg, fg, prefix4 };
+}
 
-      return `
-        <tr class="row-card">
-          <td class="cell-left">
-            <span class="${badgeClass}" style="${badgeStyle}">${shortName}</span>
-          </td>
-          <td class="cell-mid">
-            <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
-          </td>
-          <td class="cell-right">
-            <span class="depart">${vertrekTxt}</span>
-          </td>
-        </tr>
-      `;
-    }).join("");
+/* ================= STOPS LOOKUP ================= */
+let stopIdToName = new Map();
+// normalizedCleanName -> { displayName, stopIds[] }
+let cleanGroup = new Map();
 
-    tbodyEl.innerHTML = html;
-  }
+async function loadStops(){
+  const res = await fetch("./stops.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`stops.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("stops.txt lijkt leeg");
 
-  // ================= MAIN =================
-  async function loadBoard(){
-    const stopId = getStopIdFromUrl();
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
 
-    if(!stopId){
-      $("title").textContent = "Overstappen aan —";
-      $("subline").textContent = "Gebruik ?stopId=123456";
-      $("rowsLeft").innerHTML = `<tr><td class="empty">Geen stopId in de URL.</td></tr>`;
-      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
-      $("countLeft").textContent = "0";
-      $("countRight").textContent = "0";
-      return;
-    }
+  const iStopId = idx("stop_id");
+  const iStopName = idx("stop_name");
+  if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
 
-    const rawName = stopIdToName.get(stopId) || "";
-    const cleaned = cleanStopName(rawName);
+  const idToName = new Map();
+  const group = new Map();
+
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
+
+    const stopId = (row[iStopId] ?? "").replace(/^"|"$/g,"").trim();
+    const stopName = (row[iStopName] ?? "").replace(/^"|"$/g,"").trim();
+    if(!stopId) continue;
+
+    idToName.set(stopId, stopName);
+
+    const cleaned = cleanStopName(stopName);
     const norm = normalizeName(cleaned);
+    if(!norm) continue;
 
-    const displayName = cleaned || "—";
-    $("title").textContent = `Overstappen aan ${displayName}`;
-    document.title = `Overstappen aan ${displayName}`;
+    if(!group.has(norm)) group.set(norm, { displayName: cleaned, stopIds: [] });
+    group.get(norm).stopIds.push(stopId);
+  }
 
-    // Groep stop_ids (zelfde ingekorte naam)
-    let groupStopIds = [];
-    if(norm && cleanGroup.has(norm)){
-      groupStopIds = cleanGroup.get(norm).stopIds.slice();
-    } else {
-      groupStopIds = [stopId];
-    }
-    if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
+  stopIdToName = idToName;
+  cleanGroup = group;
+  log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
+}
 
-    log("[grouping] stopId:", stopId);
-    log("[grouping] rawName:", rawName);
-    log("[grouping] cleaned:", cleaned, "norm:", norm);
-    log("[grouping] stopIds:", groupStopIds);
+/* ================= API: per stop fetch (robust) ================= */
+async function fetchRealtimeForSingleStop(stopId){
+  const ent = getEntityFromStopId(stopId);
+  if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
 
-    $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
+  const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
+  log("[api-single] url:", url);
 
-    // Fetch per stop and merge (robust)
-    const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
-    for(const r of results){
-      if(r.error) log("[api-single] ERROR for", r.stopId, r.error);
-      log("[api-single] stopId", r.stopId, "blocks", r.blocks.length);
-    }
-
-    // Flatten: per halteblock max 7 doorkomsten
-    const all = [];
-    for(const r of results){
-      for(const hd of r.blocks){
-        const dks = hd?.doorkomsten || [];
-        const sliced = dks.slice(0, MAX_PER_HALTE);
-        log("[api-single] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
-        for(const d of sliced) all.push(d);
+  try{
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache",
+        "Ocp-Apim-Subscription-Key": API_KEY
       }
-    }
-
-    if(!all.length){
-      $("rowsLeft").innerHTML = `<tr><td class="empty">Geen doorkomsten.</td></tr>`;
-      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
-      $("countLeft").textContent = "0";
-      $("countRight").textContent = "0";
-      return;
-    }
-
-    // sorteer op (realtime of dienstregeling)
-    all.sort((a,b)=>{
-      const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
-      const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
-      return ta - tb;
     });
 
-    const left = all.slice(0, COL_SIZE);
-    const right = all.slice(COL_SIZE, COL_SIZE*2);
-
-    $("countLeft").textContent = String(left.length);
-    $("countRight").textContent = String(right.length);
-
-    renderColumn($("rowsLeft"), left);
-    renderColumn($("rowsRight"), right);
-  }
-
-  // ================= BOOT =================
-  (async () => {
-    setClock();
-    setInterval(setClock, 5000);
-
-    try{
-      await Promise.all([loadRoutes(), loadStops()]);
-    } catch(e){
-      console.error(e);
-      $("title").textContent = "Overstappen aan —";
-      $("subline").textContent = "GTFS bestanden konden niet geladen worden (routes.txt / stops.txt).";
-      $("rowsLeft").innerHTML = `<tr><td class="empty">Controleer of routes.txt en stops.txt in de root staan.</td></tr>`;
-      $("rowsRight").innerHTML = `<tr><td class="empty">—</td></tr>`;
-      return;
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      return { stopId, blocks: [], error: `HTTP ${res.status} — ${t.slice(0,160)}` };
     }
 
-    await loadBoard();
-    setInterval(loadBoard, REFRESH_MS);
-  })();
+    const data = await res.json();
+
+    const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
+    const blocks = [];
+    for(const item of lijst){
+      const b = item?.halteDoorkomsten || [];
+      for(const hd of b) blocks.push(hd);
+    }
+
+    return { stopId, blocks, error: null };
+  }catch(e){
+    return { stopId, blocks: [], error: String(e?.message || e) };
+  }
+}
+
+/* ================= RENDER ================= */
+function renderList(el, items){
+  if(!items.length){
+    el.innerHTML = `<div class="row"><div class="left"><span class="dest">Geen doorkomsten</span></div><div class="time">—</div></div>`;
+    return;
+  }
+
+  el.innerHTML = items.map((d, i) => {
+    const { shortName, bg, fg } = getRouteBadge(d);
+
+    // lijn-box in dezelfde stijl: rounded, stroke
+    // als route_color bestaat => die kleur gebruiken, anders accent
+    const background = bg || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    // als textColor bestaat => gebruiken, anders zwart (zoals bijlage)
+    const color = fg || "#000";
+
+    // stroke altijd wit voor leesbaarheid (zoals bijlage)
+    const bestemming = (d.bestemming ?? "—").trim() || "—";
+    const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+    const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+
+    return `
+      <div class="row ${i===0 ? "first" : ""}">
+        <div class="left">
+          <span class="line-box" style="background-color:${background};color:${color};">${shortName}</span>
+          <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+        </div>
+        <div class="time">${vertrekTxt}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* ================= MAIN ================= */
+async function loadBoard(){
+  const stopId = getStopIdFromUrl();
+
+  if(!stopId){
+    $("title").textContent = "Overstappen aan —";
+    $("subline").textContent = "Gebruik ?stopId=123456";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("footer").textContent = "—";
+    return;
+  }
+
+  const rawName = stopIdToName.get(stopId) || "";
+  const cleaned = cleanStopName(rawName);
+  const norm = normalizeName(cleaned);
+
+  const displayName = cleaned || "—";
+  $("title").textContent = `Overstappen aan ${displayName}`;
+  document.title = `Overstappen aan ${displayName}`;
+
+  // groep stopIds (zelfde ingekorte naam)
+  let groupStopIds = [];
+  if(norm && cleanGroup.has(norm)){
+    groupStopIds = cleanGroup.get(norm).stopIds.slice();
+  } else {
+    groupStopIds = [stopId];
+  }
+  if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
+
+  log("[grouping] stopId:", stopId);
+  log("[grouping] rawName:", rawName);
+  log("[grouping] cleaned:", cleaned, "norm:", norm);
+  log("[grouping] stopIds:", groupStopIds);
+
+  $("subline").textContent = `Haltes in groep: ${groupStopIds.length}`;
+
+  // fetch per stop en merge
+  const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
+  for(const r of results){
+    if(r.error) log("[api-single] ERROR for", r.stopId, r.error);
+    log("[api-single] stopId", r.stopId, "blocks", r.blocks.length);
+  }
+
+  // flatten: per halteblock max 7
+  const all = [];
+  for(const r of results){
+    for(const hd of r.blocks){
+      const dks = hd?.doorkomsten || [];
+      const sliced = dks.slice(0, MAX_PER_HALTE);
+      log("[api-single] haltenummer:", hd?.haltenummer, "doorkomsten:", dks.length, "used:", sliced.length);
+      for(const d of sliced) all.push(d);
+    }
+  }
+
+  if(!all.length){
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("footer").textContent = "Geen doorkomsten";
+    return;
+  }
+
+  // sorteer op (realtime of dienstregeling)
+  all.sort((a,b)=>{
+    const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
+    const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
+    return ta - tb;
+  });
+
+  // pak 12: links 6, rechts 6
+  const show = all.slice(0, TOTAL_SHOW);
+  const left = show.slice(0, COL_SIZE);
+  const right = show.slice(COL_SIZE, COL_SIZE*2);
+
+  renderList($("leftList"), left);
+  renderList($("rightList"), right);
+
+  // footer (zelfde “Volgende halte: …” vibe maar nu “Eerstvolgende: …”)
+  const first = show[0];
+  const firstDest = first?.bestemming ? first.bestemming : "—";
+  $("footer").textContent = `Eerstvolgende: ${firstDest}`;
+}
+
+/* ================= BOOT ================= */
+(async () => {
+  try{
+    await Promise.all([loadRoutes(), loadStops()]);
+  }catch(e){
+    console.error(e);
+    $("title").textContent = "Overstappen aan —";
+    $("subline").textContent = "GTFS bestanden konden niet geladen worden (routes.txt / stops.txt).";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("footer").textContent = "—";
+    return;
+  }
+
+  await loadBoard();
+  setInterval(loadBoard, REFRESH_MS);
+})();
 </script>
 </body>
 </html>
