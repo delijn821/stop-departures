@@ -178,6 +178,23 @@ body{
 </div>
 
 <script>
+  
+function invertColor(hex){
+  if(!hex) return "#ffffff";
+
+  hex = hex.replace("#","");
+
+  if(hex.length === 3){
+    hex = hex.split("").map(c => c + c).join("");
+  }
+
+  const r = 255 - parseInt(hex.substring(0,2),16);
+  const g = 255 - parseInt(hex.substring(2,4),16);
+  const b = 255 - parseInt(hex.substring(4,6),16);
+
+  return `rgb(${r},${g},${b})`;
+}
+
 /* ================= CONFIG ================= */
 const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
 const MAX_PER_HALTE = 7;
@@ -398,6 +415,7 @@ function renderList(el, items){
 
     const background = bg || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
     const color = fg || "#000";
+    const stroke = invertColor(color);
 
     const bestemming = (d.bestemming ?? "—").trim() || "—";
     const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
@@ -406,7 +424,12 @@ function renderList(el, items){
     return `
       <div class="row">
         <div class="left">
-          <span class="line-box" style="background-color:${background};color:${color};">${shortName}</span>
+          <span class="line-box"
+            style="
+              background-color:${background};
+              color:${color};
+              -webkit-text-stroke:2px ${stroke};
+            ">
           <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
         </div>
         <div class="time">${vertrekTxt}</div>
