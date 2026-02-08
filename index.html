@@ -3,95 +3,143 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Haltebord (De Lijn)</title>
+  <title>Haltebord</title>
   <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    body { margin: 0; background: #0b0f14; color: #e8eef6; }
-    header { padding: 16px 18px; border-bottom: 1px solid #1b2633; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    header h1 { font-size: 16px; margin: 0; opacity: 0.9; }
-    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .controls label { font-size: 12px; opacity: 0.85; display: flex; gap: 6px; align-items: center; }
-    input, button { background: #121a24; color: #e8eef6; border: 1px solid #253448; border-radius: 10px; padding: 8px 10px; }
-    button { cursor: pointer; }
-    button:hover { filter: brightness(1.08); }
-    main { padding: 18px; max-width: 980px; margin: 0 auto; }
-    .meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .pill { font-size: 12px; padding: 6px 10px; border: 1px solid #253448; border-radius: 999px; background: #0f1620; opacity: 0.95; }
-    .error { border-color: #7a2c2c; background: #1a0f12; color: #ffb4b4; }
-    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 14px; border: 1px solid #253448; }
-    thead { background: #0f1620; }
-    th, td { padding: 12px 12px; border-bottom: 1px solid #1b2633; text-align: left; font-size: 14px; }
-    th { font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.8; }
-    tbody tr:hover { background: #0f1620; }
-    .line { font-weight: 700; }
-    .muted { opacity: 0.75; font-size: 12px; }
-    .delta { font-variant-numeric: tabular-nums; }
-    .late { color: #ffcc66; }
-    .early { color: #7ee787; }
-    .rt { font-weight: 650; }
-    .nowrap { white-space: nowrap; }
-    .small { font-size: 12px; opacity: 0.85; }
+    :root{
+      --accent:#FFCC11;
+      --bg:#0b0f14;
+      --panel:#101722;
+      --line:#1b2633;
+      --text:#e8eef6;
+      --muted:rgba(232,238,246,.72);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    html,body{height:100%;}
+    body{margin:0;background:var(--bg);color:var(--text);}
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      padding:14px 18px;border-bottom:2px solid rgba(255,204,17,.35);
+      background:linear-gradient(180deg, rgba(255,204,17,.10), transparent 65%);
+    }
+    .title{
+      display:flex;flex-direction:column;gap:2px;
+    }
+    .title h1{margin:0;font-size:16px;letter-spacing:.02em;}
+    .title .sub{font-size:12px;color:var(--muted);}
+    .clock{
+      font-variant-numeric: tabular-nums;
+      border:1px solid rgba(255,204,17,.35);
+      background:rgba(255,204,17,.08);
+      padding:8px 12px;border-radius:999px;
+      font-size:13px;
+    }
+    main{max-width:980px;margin:0 auto;padding:18px;}
+    .status{
+      margin-bottom:12px;
+      font-size:12px;color:var(--muted);
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:var(--panel);
+      padding:6px 10px;border-radius:999px;
+    }
+    .pill.accent{
+      border-color: rgba(255,204,17,.45);
+      background: rgba(255,204,17,.10);
+      color: var(--text);
+    }
+    table{
+      width:100%;
+      border-collapse:separate;border-spacing:0;
+      overflow:hidden;border-radius:16px;
+      border:1px solid var(--line);
+      background:var(--panel);
+    }
+    thead th{
+      text-align:left;font-size:12px;letter-spacing:.03em;
+      text-transform:uppercase;color:rgba(232,238,246,.78);
+      padding:12px 12px;border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+    }
+    tbody td{
+      padding:12px 12px;border-bottom:1px solid rgba(27,38,51,.85);
+      font-size:15px;
+    }
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover{background:rgba(255,255,255,.02);}
+    .badge{
+      display:inline-block;
+      padding:6px 10px;border-radius:12px;
+      font-weight:800;letter-spacing:.02em;
+      font-variant-numeric: tabular-nums;
+      min-width:52px;text-align:center;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .badge.fallback{
+      background:rgba(255,204,17,.18);
+      color:#111;
+      border-color:rgba(255,204,17,.40);
+    }
+    .dest{font-weight:600;}
+    .depart{
+      font-variant-numeric: tabular-nums;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .muted{color:var(--muted);font-size:12px;}
+    .error{
+      color:#ffb4b4;
+      border-color:#7a2c2c !important;
+      background:#1a0f12 !important;
+    }
   </style>
 </head>
 
 <body>
 <header>
-  <h1>Haltebord (De Lijn realtime)</h1>
-
-  <div class="controls">
-    <label>Entiteit
-      <input id="entity" value="3" size="2" />
-    </label>
-    <label>Haltenummer
-      <input id="stop" value="303467" size="8" />
-    </label>
-    <label>Max
-      <input id="max" value="10" size="3" />
-    </label>
-    <label>Refresh (s)
-      <input id="refresh" value="15" size="3" />
-    </label>
-    <label>API key
-      <input id="key" placeholder="plak je key hier" size="24" />
-    </label>
-    <button id="loadBtn">Laden</button>
+  <div class="title">
+    <h1>Doorkomsten</h1>
+    <div class="sub" id="subtitle">—</div>
   </div>
+  <div class="clock" id="clock">--:--:--</div>
 </header>
 
 <main>
-  <div class="meta">
-    <div class="pill" id="statusPill">Klaar.</div>
-    <div class="pill" id="clockPill">--:--:--</div>
+  <div class="status">
+    <span class="pill accent" id="stopPill">stopId=—</span>
+    <span class="pill" id="updatePill">Laden…</span>
   </div>
 
-  <table>
+  <table aria-label="Doorkomsten tabel">
     <thead>
       <tr>
-        <th>Lijn</th>
+        <th style="width:110px;">Lijn</th>
         <th>Bestemming</th>
-        <th class="nowrap">Realtime</th>
-        <th class="nowrap">Dienstregeling</th>
-        <th class="nowrap">+ / -</th>
-        <th>Status</th>
+        <th style="width:140px;">Vertrek</th>
       </tr>
     </thead>
     <tbody id="rows">
-      <tr><td colspan="6" class="small muted">Vul je API key in en klik “Laden”.</td></tr>
+      <tr><td colspan="3" class="muted">Laden…</td></tr>
     </tbody>
   </table>
 
-  <p class="muted" style="margin-top:12px">
-    Tip: op GitHub Pages blijft je API key zichtbaar voor anderen. Voor “echte” publicatie gebruik je best een proxy (zie onderaan).
+  <p class="muted" style="margin-top:12px;">
+    Tip: open als <span style="color:var(--accent);font-weight:700;">…/index.html?stopId=1303467</span>
   </p>
 </main>
 
 <script>
-  const $ = (id) => document.getElementById(id);
+  // ========= CONFIG =========
+  const API_KEY = "VUL_HIER_JE_KEY_IN";
+  const MAX_AANTAL = 10;
+  const REFRESH_MS = 15000;
 
-  function pad2(n){ return String(n).padStart(2,'0'); }
-  function fmtTime(iso){
-    if(!iso) return "—";
-    const d = new Date(iso);
+  // ========= HELPERS =========
+  const $ = (id) => document.getElementById(id);
+  const pad2 = (n) => String(n).padStart(2, "0");
+
+  function fmtClock(d){
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
   function fmtHM(iso){
@@ -99,144 +147,217 @@
     const d = new Date(iso);
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
-  function diffMin(isoPlanned, isoRt){
-    if(!isoPlanned || !isoRt) return null;
-    const a = new Date(isoPlanned).getTime();
-    const b = new Date(isoRt).getTime();
-    return Math.round((b - a) / 60000); // minuten
+  function minutesUntil(iso){
+    const t = new Date(iso).getTime();
+    const now = Date.now();
+    return Math.round((t - now) / 60000);
   }
-  function statusText(predArr){
-    if(!Array.isArray(predArr) || predArr.length === 0) return "UNKNOWN";
-    return predArr.join(", ");
+  function parseCSVLine(line){
+    // simpele CSV parser die quotes ondersteunt (genoeg voor GTFS routes.txt)
+    const out = [];
+    let cur = "", inQ = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"'){
+        if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if(ch === "," && !inQ){
+        out.push(cur);
+        cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
   }
-
-  function setStatus(text, isError=false){
-    const el = $("statusPill");
+  function setUpdate(text, isError=false){
+    const el = $("updatePill");
     el.textContent = text;
     el.classList.toggle("error", !!isError);
   }
 
-  async function loadDepartures(){
-    const entiteit = $("entity").value.trim();
-    const stop = $("stop").value.trim();
-    const max = $("max").value.trim() || "10";
-    const key = $("key").value.trim();
+  // ========= ROUTES LOOKUP (routes.txt) =========
+  // Map: prefix4 -> { shortName, color, textColor }
+  let routeMap = new Map();
 
-    if(!entiteit || !stop || !key){
-      setStatus("Vul entiteit, halte en API key in.", true);
+  async function loadRoutes(){
+    const res = await fetch("./routes.txt", { cache: "no-store" });
+    if(!res.ok) throw new Error(`routes.txt niet gevonden (HTTP ${res.status})`);
+    const txt = await res.text();
+
+    const lines = txt.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if(lines.length < 2) throw new Error("routes.txt lijkt leeg");
+
+    const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+    const idx = (name) => header.indexOf(name);
+
+    const iRouteId = idx("route_id");
+    const iShort   = idx("route_short_name");
+    const iColor   = idx("route_color");
+    const iTextCol = idx("route_text_color");
+
+    if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist kolommen (route_id/route_short_name)");
+
+    const map = new Map();
+    for(let li=1; li<lines.length; li++){
+      const row = parseCSVLine(lines[li]);
+      if(row.length !== header.length) continue;
+
+      const routeIdRaw = (row[iRouteId] ?? "").replace(/^"|"$/g,"");
+      if(routeIdRaw.length < 4) continue;
+
+      const prefix4 = routeIdRaw.slice(0,4);
+      // "eerste resultaat" winnen: dus enkel zetten als nog niet bestaat
+      if(!map.has(prefix4)){
+        map.set(prefix4, {
+          shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
+          color: (row[iColor] ?? "").replace(/^"|"$/g,""),
+          textColor: (row[iTextCol] ?? "").replace(/^"|"$/g,"")
+        });
+      }
+    }
+    routeMap = map;
+  }
+
+  // ========= STOPID -> endpoint =========
+  function getStopId(){
+    const p = new URLSearchParams(location.search);
+    return (p.get("stopId") || "").trim();
+  }
+  function getEntityFromStopId(stopId){
+    // "het eerste getal ervan is de haltesleutel"
+    const firstChar = stopId[0];
+    const ent = parseInt(firstChar, 10);
+    if(Number.isNaN(ent)) return null;
+    return ent;
+  }
+
+  // ========= MAIN FETCH =========
+  async function loadBoard(){
+    const stopId = getStopId();
+    $("stopPill").textContent = `stopId=${stopId || "—"}`;
+
+    if(!stopId){
+      $("subtitle").textContent = "Geen stopId in de URL.";
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Gebruik ?stopId=123456</td></tr>`;
+      setUpdate("Wacht op stopId…", true);
       return;
     }
 
-    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${entiteit}_${stop}/real-time?maxAantalDoorkomsten=${encodeURIComponent(max)}`;
+    const ent = getEntityFromStopId(stopId);
+    if(ent === null){
+      $("subtitle").textContent = "Ongeldige stopId.";
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">stopId moet starten met een cijfer (entiteit).</td></tr>`;
+      setUpdate("Ongeldige stopId", true);
+      return;
+    }
 
-    setStatus("Ophalen…");
-    $("rows").innerHTML = `<tr><td colspan="6" class="small muted">Ophalen…</td></tr>`;
+    $("subtitle").textContent = `Entiteit ${ent} • Haltenummer ${stopId}`;
+
+    const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL}`;
 
     try{
+      setUpdate("Ophalen…");
       const res = await fetch(url, {
         method: "GET",
         headers: {
           "Cache-Control": "no-cache",
-          "Ocp-Apim-Subscription-Key": key
+          "Ocp-Apim-Subscription-Key": API_KEY
         }
       });
 
       if(!res.ok){
         const t = await res.text().catch(()=> "");
-        throw new Error(`HTTP ${res.status} ${res.statusText} — ${t.slice(0,160)}`);
+        throw new Error(`API fout: HTTP ${res.status} — ${t.slice(0,160)}`);
       }
 
       const data = await res.json();
+      const doorkomsten =
+        data?.halteDoorkomstenLijst?.[0]?.halteDoorkomsten?.[0]?.doorkomsten ?? [];
 
-      // pad veilig uit de response
-      const lijst0 = data?.halteDoorkomstenLijst?.[0];
-      const halteDoorkomsten0 = lijst0?.halteDoorkomsten?.[0];
-      const doorkomsten = halteDoorkomsten0?.doorkomsten ?? [];
-
-      if(doorkomsten.length === 0){
-        $("rows").innerHTML = `<tr><td colspan="6" class="small muted">Geen doorkomsten gevonden.</td></tr>`;
-        setStatus("Geen doorkomsten.");
+      if(!doorkomsten.length){
+        $("rows").innerHTML = `<tr><td colspan="3" class="muted">Geen doorkomsten.</td></tr>`;
+        setUpdate("Geen doorkomsten.");
         return;
       }
 
-      // sorteer op realtime (of dienstregeling) tijd
+      // sorteer op realtime indien aanwezig anders dienstregeling
       doorkomsten.sort((a,b)=>{
         const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
         const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
         return ta - tb;
       });
 
-      const rows = doorkomsten.map(d => {
-        const line = d.lijnnummer ?? "—";
-        const dest = d.bestemmingKort || d.plaatsBestemming || d.bestemming || "—";
-        const plannedIso = d.dienstregelingTijdstip;
+      const rowsHtml = doorkomsten.map(d => {
+        const entiteit = Number(d.entiteitnummer);
+        const lijnnr = Number(d.lijnnummer);
+
+        // routeKey: (entiteit * 1000) + lijnnummer  => neem eerste 4 cijfers
+        const routeKeyNum = (entiteit * 1000) + lijnnr;
+        const prefix4 = String(routeKeyNum).padStart(4, "0").slice(0,4);
+
+        const route = routeMap.get(prefix4) || null;
+        const shortName = route?.shortName || String(lijnnr);
+
+        const bg = route?.color ? `#${route.color}` : null;
+        const fg = route?.textColor ? `#${route.textColor}` : null;
+
+        const badgeStyle = bg
+          ? `background:${bg};color:${fg || "#000"};`
+          : ``;
+
+        const badgeClass = bg ? "badge" : "badge fallback";
+
+        const bestemming = d.bestemming ?? "—";
+
         const rtIso = d["real-timeTijdstip"] || null;
+        const schedIso = d.dienstregelingTijdstip || null;
 
-        const planned = fmtHM(plannedIso);
-        const rt = fmtHM(rtIso) || planned;
-
-        const dm = diffMin(plannedIso, rtIso);
-        let delta = "—";
-        let deltaClass = "delta muted";
-        if(dm !== null){
-          if(dm > 0){ delta = `+${dm} min`; deltaClass = "delta late"; }
-          else if(dm < 0){ delta = `${dm} min`; deltaClass = "delta early"; }
-          else { delta = "op tijd"; deltaClass = "delta"; }
+        let vertrekTxt = "—";
+        if(rtIso){
+          const m = minutesUntil(rtIso);
+          vertrekTxt = (m <= 0) ? "nu" : `${m}'`;
+        } else if(schedIso){
+          vertrekTxt = fmtHM(schedIso);
         }
-
-        const st = statusText(d.predictionStatussen);
-        const stText = rtIso ? st : "GEEN REALTIME";
 
         return `
           <tr>
-            <td class="line">${line}</td>
-            <td>${dest}<div class="muted">Richting: ${d.richting ?? "—"}</div></td>
-            <td class="rt nowrap">${rt}</td>
-            <td class="nowrap">${planned}</td>
-            <td class="${deltaClass} nowrap">${delta}</td>
-            <td class="nowrap">${stText}</td>
+            <td><span class="${badgeClass}" style="${badgeStyle}">${shortName}</span></td>
+            <td class="dest">${bestemming}</td>
+            <td class="depart">${vertrekTxt}</td>
           </tr>
         `;
       }).join("");
 
-      $("rows").innerHTML = rows;
-      setStatus(`OK — ${doorkomsten.length} doorkomsten geladen.`);
+      $("rows").innerHTML = rowsHtml;
+      setUpdate(`Bijgewerkt ${fmtClock(new Date())}`);
 
-    }catch(err){
+    } catch(err){
       console.error(err);
-      $("rows").innerHTML = `<tr><td colspan="6" class="small muted">Fout: ${String(err.message || err)}</td></tr>`;
-      setStatus("Fout bij ophalen (mogelijk CORS of key).", true);
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">Fout: ${String(err.message || err)}</td></tr>`;
+      setUpdate("Fout bij ophalen", true);
     }
   }
 
+  // ========= BOOT =========
   // klok
-  setInterval(()=>{
-    const now = new Date();
-    $("clockPill").textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-  }, 250);
+  setInterval(() => $("clock").textContent = fmtClock(new Date()), 250);
 
-  // refresh timer
-  let timer = null;
-  function startAutoRefresh(){
-    if(timer) clearInterval(timer);
-    const seconds = Math.max(5, parseInt($("refresh").value || "15", 10));
-    timer = setInterval(loadDepartures, seconds * 1000);
-  }
+  (async () => {
+    try{
+      await loadRoutes();
+    }catch(e){
+      console.error(e);
+      setUpdate("routes.txt fout", true);
+      $("rows").innerHTML = `<tr><td colspan="3" class="muted">routes.txt kon niet geladen worden.</td></tr>`;
+      return;
+    }
 
-  $("loadBtn").addEventListener("click", ()=>{
-    loadDepartures();
-    startAutoRefresh();
-  });
-
-  // Enter = laden
-  ["entity","stop","max","refresh","key"].forEach(id=>{
-    $(id).addEventListener("keydown", (e)=>{
-      if(e.key === "Enter"){
-        loadDepartures();
-        startAutoRefresh();
-      }
-    });
-  });
+    await loadBoard();
+    setInterval(loadBoard, REFRESH_MS);
+  })();
 </script>
 </body>
 </html>
