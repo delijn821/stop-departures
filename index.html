@@ -264,6 +264,68 @@ function invertHexColor(color){
   return `#${to2(r)}${to2(g)}${to2(b)}`;
 }
 
+/* === NEW: bepaal hoeveel rijen per kolom passen (zonder afsnijden) === */
+function rowsPerColumnThatFit(){
+  const list = $("leftList");
+  if(!list) return 1;
+
+  const rect = list.getBoundingClientRect();
+  let avail = window.innerHeight - rect.top;
+  if(avail <= 0) return 1;
+
+  // Meet "basis" hoogte van een eerste rij + van een volgende rij (met divider/padding-top)
+  const probeWrap = document.createElement("div");
+  probeWrap.style.position = "absolute";
+  probeWrap.style.left = "-99999px";
+  probeWrap.style.top = "-99999px";
+  probeWrap.style.visibility = "hidden";
+  probeWrap.style.width = rect.width ? rect.width + "px" : "800px";
+
+  const row1 = document.createElement("div");
+  row1.className = "row";
+  row1.innerHTML = `
+    <div class="left">
+      <span class="line-box">99</span>
+      <span class="dest">Voorbeeldbestemming</span>
+    </div>
+    <div class="time">12'</div>
+  `;
+
+  const row2 = document.createElement("div");
+  row2.className = "row";
+  // .row + .row selector vereist dat row2 direct na row1 staat:
+  probeWrap.appendChild(row1);
+  probeWrap.appendChild(row2);
+  row2.innerHTML = row1.innerHTML;
+
+  document.body.appendChild(probeWrap);
+
+  const h1 = row1.getBoundingClientRect().height;
+  const h2 = row2.getBoundingClientRect().height; // incl. border-top + extra padding-top door .row + .row
+
+  document.body.removeChild(probeWrap);
+
+  // gap uit CSS (.list { gap: 22px; })
+  const gap = 22;
+
+  // brute-fit: tel rijen tot het niet meer past
+  let count = 0;
+  let used = 0;
+
+  for(let i=1; i<=COL_SIZE; i++){
+    const h = (i === 1) ? h1 : h2;
+    const extraGap = (i === 1) ? 0 : gap;
+    if(used + extraGap + h <= avail){
+      used += extraGap + h;
+      count++;
+    } else {
+      break;
+    }
+  }
+
+  return Math.max(1, count);
+}
+
 /* ================= ROUTES LOOKUP ================= */
 let routeMap = new Map();
 
@@ -487,9 +549,12 @@ async function loadBoard(){
     return ta - tb;
   });
 
-  const show = all.slice(0, TOTAL_SHOW);
-  const left = show.slice(0, COL_SIZE);
-  const right = show.slice(COL_SIZE, COL_SIZE*2);
+  const dynamicColSize = rowsPerColumnThatFit();
+  const dynamicTotalShow = dynamicColSize * 2;
+
+  const show = all.slice(0, dynamicTotalShow);
+  const left = show.slice(0, dynamicColSize);
+  const right = show.slice(dynamicColSize, dynamicColSize*2);
 
   renderList($("leftList"), left);
 
@@ -516,6 +581,7 @@ async function loadBoard(){
 
   await loadBoard();
   setInterval(loadBoard, REFRESH_MS);
+  window.addEventListener("resize", () => loadBoard());
 })();
 </script>
 </body>
