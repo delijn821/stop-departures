@@ -144,6 +144,7 @@ body{
 .line-box{
   background-color: var(--accent);
   color: #000;
+  -webkit-text-stroke: 2px #fff;
 
   display: inline-flex;
   align-items: center;
@@ -188,9 +189,14 @@ body{
   white-space: nowrap;
 }
 
-/* === NEW: cancelled indicator (geen extra kolom) === */
+/* === cancelled indicator (geen extra kolom) === */
 .cancelledText{
   color:#ff3b30 !important;
+}
+.cancelledStrike{
+  text-decoration: line-through;
+  text-decoration-thickness: .12em;
+  text-decoration-color: rgba(255,59,48,.95);
 }
 .cancelledTag{
   display:inline-block;
@@ -282,6 +288,13 @@ function minutesUntil(iso){
 function formatMinutes(m){
   if(m <= 0) return "nu";
   return `${m}'`;
+}
+
+function formatHHMM(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return "—";
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 function normalizeName(s){
@@ -523,14 +536,21 @@ function renderList(el, items){
     const stroke = invertHexColor(color);
 
     const bestemming = (d.bestemming ?? "—").trim() || "—";
-    const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-    const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
 
     const statuses = Array.isArray(d.predictionStatussen) ? d.predictionStatussen : [];
-    const isCancelled = statuses.includes("CANCELLED");
+    const isCancelled =
+      (String(d.status || "").toUpperCase() === "CANCELLED") ||
+      statuses.includes("GESCHRAPT") ||
+      statuses.includes("CANCELLED");
 
-    const destClass = isCancelled ? "dest cancelledText" : "dest";
-    const timeClass = isCancelled ? "time cancelledText" : "time";
+    const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+
+    const vertrekTxt = isCancelled
+      ? formatHHMM(d.dienstregelingTijdstip || iso)
+      : (iso ? formatMinutes(minutesUntil(iso)) : "—");
+
+    const destClass = isCancelled ? "dest cancelledText cancelledStrike" : "dest";
+    const timeClass = isCancelled ? "time cancelledText cancelledStrike" : "time";
     const cancelTag = isCancelled ? `<span class="cancelledTag">GEANNULEERD</span>` : ``;
 
     return `
@@ -593,7 +613,7 @@ async function loadBoard(){
     return;
   }
 
-  /* === NEW: dedupe op doorkomstId (dubbele ritten slechts 1x tonen) === */
+  /* === dedupe op doorkomstId (dubbele ritten slechts 1x tonen) === */
   const seen = new Set();
   const deduped = [];
   for(const d of all){
