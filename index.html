@@ -70,7 +70,7 @@ body{
 .clock{
   font-size: 3.5em;
   font-weight: 400;
-  width: 6.2ch;          /* vaste "buffer" voor 00:00 */
+  width: 6.2ch;
   text-align: right;
   flex: 0 0 6.2ch;
   font-variant-numeric: tabular-nums;
@@ -130,26 +130,37 @@ body{
   flex: 1 1 auto;
 }
 
-/* lijnbadge: vaste breedte zodat alles aligned is */
+/* ===== FIX: perfect centreren van lijnnummer =====
+   - display:inline-flex + align/justify center
+   - line-height: 1
+   - padding horizontaal blijft, verticale padding weg (centering via height)
+*/
 .line-box{
   background-color: var(--accent);
   color: #000;
   -webkit-text-stroke: 2px #fff;
-  padding: 8px 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 1.35em;        /* bepaalt visuele hoogte van badge */
+  width: 4.2ch;          /* genoeg voor "X60" / "R50" */
+  flex: 0 0 4.2ch;
+
+  padding: 0 0.55ch;     /* enkel horizontaal */
   border-radius: 22px;
+
   font-size: 2.65em;
   font-weight: 600;
-  box-shadow: 0 0 15px rgba(0,0,0,0.25);
-  line-height: 1.1;
+  line-height: 1;        /* belangrijk voor optische centering */
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 
-  width: 4.2ch;          /* genoeg voor "X60" / "R50" */
-  text-align: center;
-  flex: 0 0 4.2ch;
-  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 15px rgba(0,0,0,0.25);
 }
 
-/* bestemming: mag langer (neemt resterende ruimte in), maar nooit 2 lijnen */
+/* bestemming */
 .dest{
   font-size: 2.55em;
   font-weight: 500;
@@ -157,16 +168,16 @@ body{
   text-overflow:ellipsis;
   white-space:nowrap;
   flex: 1 1 auto;
-  min-width: 0;          /* IMPORTANT: laat ellipsis pas laat gebeuren */
+  min-width: 0;
 }
 
-/* tijd: vaste breedte voor stabiele uitlijning */
+/* tijd */
 .time{
   font-size: 2.30em;
   font-weight: 400;
   color: var(--muted);
   text-align:right;
-  width: 4.2ch;          /* genoeg voor "nu" / "59'" */
+  width: 4.2ch;
   flex: 0 0 4.2ch;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -261,7 +272,7 @@ function cleanStopName(name){
   return cut.replace(/\s+/g," ").trim();
 }
 
-/* === NEW: inverse kleur voor text-stroke === */
+/* === inverse kleur voor text-stroke === */
 function invertHexColor(color){
   if(!color) return "#ffffff";
   let hex = String(color).trim();
