@@ -189,12 +189,47 @@ body{
   white-space: nowrap;
 }
 
-/* === NEW: cancelled styling === */
-.cancelled{
-  color: #ff3b30 !important;
-  text-decoration: line-through;
-  text-decoration-thickness: 0.14em;
-  text-decoration-color: currentColor;
+/* === NEW (1): status-badges (klein, consistent) === */
+.badges{
+  display:inline-flex;
+  gap: 12px;
+  margin-left: 14px;
+  flex: 0 0 auto;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.95em;
+  font-weight: 600;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  line-height: 1;
+  border: 2px solid rgba(255,255,255,.22);
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.10);
+}
+.badge.cancelled{
+  border-color: rgba(255,59,48,.55);
+  background: rgba(255,59,48,.16);
+  color: #ff3b30;
+}
+.badge.delayed{
+  border-color: rgba(255,204,17,.55);
+  background: rgba(255,204,17,.14);
+  color: #FFCC11;
+}
+.badge.scheduled{
+  border-color: rgba(180,180,180,.40);
+  background: rgba(180,180,180,.10);
+  color: rgba(255,255,255,.80);
+}
+.badge.realtime{
+  border-color: rgba(120,220,140,.50);
+  background: rgba(120,220,140,.12);
+  color: rgba(170,255,190,.95);
 }
 </style>
 </head>
@@ -273,13 +308,6 @@ function minutesUntil(iso){
 function formatMinutes(m){
   if(m <= 0) return "nu";
   return `${m}'`;
-}
-
-/* === NEW: format HH:MM (voor cancelled) === */
-function formatHHMM(iso){
-  if(!iso) return "—";
-  const d = new Date(iso);
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 function normalizeName(s){
@@ -524,20 +552,31 @@ function renderList(el, items){
 
     const statuses = Array.isArray(d.predictionStatussen) ? d.predictionStatussen : [];
     const isCancelled = statuses.includes("CANCELLED");
+    const isRealtime = statuses.includes("REALTIME");
+    const isScheduled = statuses.includes("SCHEDULED");
+    const isDelayed = statuses.includes("DELAYED") || statuses.includes("DELAY") || statuses.includes("LATE");
+
+    const badges = [];
+    if(isCancelled) badges.push(`<span class="badge cancelled">Geannuleerd</span>`);
+    else{
+      if(isDelayed) badges.push(`<span class="badge delayed">Vertraagd</span>`);
+      if(isRealtime) badges.push(`<span class="badge realtime">Realtime</span>`);
+      if(isScheduled) badges.push(`<span class="badge scheduled">Dienstregeling</span>`);
+    }
+
+    const badgesHtml = badges.length ? `<span class="badges">${badges.join("")}</span>` : "";
 
     const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-    const vertrekTxt = isCancelled ? formatHHMM(d.dienstregelingTijdstip || iso) : (iso ? formatMinutes(minutesUntil(iso)) : "—");
-
-    const destClass = isCancelled ? "dest cancelled" : "dest";
-    const timeClass = isCancelled ? "time cancelled" : "time";
+    const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
 
     return `
       <div class="row">
         <div class="left">
           <span class="line-box" style="background-color:${background};color:${color};-webkit-text-stroke:2px ${stroke};">${shortName}</span>
-          <span class="${destClass}" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+          <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+          ${badgesHtml}
         </div>
-        <div class="${timeClass}">${vertrekTxt}</div>
+        <div class="time">${vertrekTxt}</div>
       </div>
     `;
   }).join("");
@@ -584,14 +623,24 @@ async function loadBoard(){
     }
   }
 
-  if(!all.length){
+  /* === NEW (3): dedup op doorkomstId === */
+  const seen = new Set();
+  const deduped = [];
+  for(const d of all){
+    const key = d?.doorkomstId || null;
+    if(key && seen.has(key)) continue;
+    if(key) seen.add(key);
+    deduped.push(d);
+  }
+
+  if(!deduped.length){
     renderList($("leftList"), []);
     renderList($("rightList"), []);
     $("colRight").style.display = "none";
     return;
   }
 
-  all.sort((a,b)=>{
+  deduped.sort((a,b)=>{
     const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
     const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
     return ta - tb;
@@ -600,7 +649,7 @@ async function loadBoard(){
   const dynamicColSize = rowsPerColumnThatFit();
   const dynamicTotalShow = dynamicColSize * 2;
 
-  const show = all.slice(0, dynamicTotalShow);
+  const show = deduped.slice(0, dynamicTotalShow);
   const left = show.slice(0, dynamicColSize);
   const right = show.slice(dynamicColSize, dynamicColSize*2);
 
