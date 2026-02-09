@@ -59,14 +59,24 @@ body{
   align-items:center;
 }
 
-/* Buffer voor klok: vaste breedte zodat titel nooit verspringt */
+/* FIX: title mag niet door klok heen
+   - flex: 1 1 auto (neemt resterende ruimte)
+   - overflow hidden + ellipsis
+   - min-width:0 zodat flex item echt mag krimpen
+*/
 .title{
   font-size: 3.75em;
   font-weight: 500;
   letter-spacing: .01em;
   white-space: nowrap;
+
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 24px; /* extra buffer voor zekerheid */
 }
+
 .clock{
   font-size: 3.5em;
   font-weight: 400;
@@ -130,11 +140,7 @@ body{
   flex: 1 1 auto;
 }
 
-/* ===== FIX: perfect centreren van lijnnummer =====
-   - display:inline-flex + align/justify center
-   - line-height: 1
-   - padding horizontaal blijft, verticale padding weg (centering via height)
-*/
+/* perfect centreren van lijnnummer */
 .line-box{
   background-color: var(--accent);
   color: #000;
@@ -144,16 +150,16 @@ body{
   align-items: center;
   justify-content: center;
 
-  height: 1.35em;        /* bepaalt visuele hoogte van badge */
-  width: 4.2ch;          /* genoeg voor "X60" / "R50" */
+  height: 1.35em;
+  width: 4.2ch;
   flex: 0 0 4.2ch;
 
-  padding: 0 0.55ch;     /* enkel horizontaal */
+  padding: 0 0.55ch;
   border-radius: 22px;
 
   font-size: 2.65em;
   font-weight: 600;
-  line-height: 1;        /* belangrijk voor optische centering */
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 
