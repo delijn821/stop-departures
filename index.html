@@ -272,7 +272,7 @@ function normalizeName(s){
 }
 function cleanStopName(name){
   if(!name) return "";
-  const re = /(\s+perron\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
+  const re = /(\s+perron\b|\s+1\b|\s+2\b|\s+3\b|\s+6\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
   const m = re.exec(name);
   const cut = m ? name.slice(0, m.index) : name;
   return cut.replace(/\s+/g," ").trim();
