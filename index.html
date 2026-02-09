@@ -198,19 +198,6 @@ body{
   text-decoration-thickness: .12em;
   text-decoration-color: rgba(255,59,48,.95);
 }
-.cancelledTag{
-  display:inline-block;
-  margin-left: 14px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 2px solid rgba(255,59,48,.85);
-  color:#ff3b30;
-  font-weight: 600;
-  letter-spacing: .02em;
-  font-size: .52em;
-  line-height: 1;
-  vertical-align: middle;
-}
 </style>
 </head>
 
@@ -551,13 +538,12 @@ function renderList(el, items){
 
     const destClass = isCancelled ? "dest cancelledText cancelledStrike" : "dest";
     const timeClass = isCancelled ? "time cancelledText cancelledStrike" : "time";
-    const cancelTag = isCancelled ? `<span class="cancelledTag">GEANNULEERD</span>` : ``;
 
     return `
       <div class="row">
         <div class="left">
           <span class="line-box" style="background-color:${background};color:${color};-webkit-text-stroke:2px ${stroke};">${shortName}</span>
-          <span class="${destClass}" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}${cancelTag}</span>
+          <span class="${destClass}" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
         </div>
         <div class="${timeClass}">${vertrekTxt}</div>
       </div>
