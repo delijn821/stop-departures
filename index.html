@@ -188,6 +188,14 @@ body{
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* === NEW: cancelled styling === */
+.cancelled{
+  color: #ff3b30 !important;
+  text-decoration: line-through;
+  text-decoration-thickness: 0.14em;
+  text-decoration-color: currentColor;
+}
 </style>
 </head>
 
@@ -265,6 +273,13 @@ function minutesUntil(iso){
 function formatMinutes(m){
   if(m <= 0) return "nu";
   return `${m}'`;
+}
+
+/* === NEW: format HH:MM (voor cancelled) === */
+function formatHHMM(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 function normalizeName(s){
@@ -506,16 +521,23 @@ function renderList(el, items){
     const stroke = invertHexColor(color);
 
     const bestemming = (d.bestemming ?? "—").trim() || "—";
+
+    const statuses = Array.isArray(d.predictionStatussen) ? d.predictionStatussen : [];
+    const isCancelled = statuses.includes("CANCELLED");
+
     const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
-    const vertrekTxt = iso ? formatMinutes(minutesUntil(iso)) : "—";
+    const vertrekTxt = isCancelled ? formatHHMM(d.dienstregelingTijdstip || iso) : (iso ? formatMinutes(minutesUntil(iso)) : "—");
+
+    const destClass = isCancelled ? "dest cancelled" : "dest";
+    const timeClass = isCancelled ? "time cancelled" : "time";
 
     return `
       <div class="row">
         <div class="left">
           <span class="line-box" style="background-color:${background};color:${color};-webkit-text-stroke:2px ${stroke};">${shortName}</span>
-          <span class="dest" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+          <span class="${destClass}" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
         </div>
-        <div class="time">${vertrekTxt}</div>
+        <div class="${timeClass}">${vertrekTxt}</div>
       </div>
     `;
   }).join("");
