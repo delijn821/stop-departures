@@ -59,15 +59,21 @@ body{
   align-items:center;
 }
 
+/* Buffer voor klok: vaste breedte zodat titel nooit verspringt */
 .title{
   font-size: 3.75em;
-  font-weight: 500; /* zoals destination in voorbeeld */
+  font-weight: 500;
   letter-spacing: .01em;
+  white-space: nowrap;
+  min-width: 0;
 }
-
 .clock{
   font-size: 3.5em;
   font-weight: 400;
+  width: 6.2ch;          /* vaste "buffer" voor 00:00 */
+  text-align: right;
+  flex: 0 0 6.2ch;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== 2 kolommen ===== */
@@ -96,7 +102,7 @@ body{
 .list{
   display:flex;
   flex-direction:column;
-  gap: 22px;        /* meer ruimte tussen lijnen */
+  gap: 22px;
   overflow:hidden;
   padding: 10px 0;
 }
@@ -121,9 +127,10 @@ body{
   align-items:center;
   gap: 22px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-/* lijnbadge: Bold 600, zoals in voorbeeld line-box */
+/* lijnbadge: vaste breedte zodat alles aligned is */
 .line-box{
   background-color: var(--accent);
   color: #000;
@@ -131,29 +138,36 @@ body{
   padding: 8px 20px;
   border-radius: 22px;
   font-size: 2.65em;
-  font-weight: 600; /* IMPORTANT: match voorbeeld */
+  font-weight: 600;
   box-shadow: 0 0 15px rgba(0,0,0,0.25);
   line-height: 1.1;
   white-space: nowrap;
+
+  width: 4.2ch;          /* genoeg voor "X60" / "R50" */
+  text-align: center;
+  flex: 0 0 4.2ch;
+  font-variant-numeric: tabular-nums;
 }
 
-/* bestemming: Medium 500 (zoals destination/stops font-weight 500 in voorbeeld) */
+/* bestemming: mag langer (neemt resterende ruimte in), maar nooit 2 lijnen */
 .dest{
   font-size: 2.55em;
   font-weight: 500;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;          /* IMPORTANT: laat ellipsis pas laat gebeuren */
 }
 
-/* tijd: Regular 400 (zoals clock 400, stop-time 0.8em) */
+/* tijd: vaste breedte voor stabiele uitlijning */
 .time{
   font-size: 2.30em;
   font-weight: 400;
   color: var(--muted);
   text-align:right;
-  min-width: 110px;
+  width: 4.2ch;          /* genoeg voor "nu" / "59'" */
+  flex: 0 0 4.2ch;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -264,7 +278,7 @@ function invertHexColor(color){
   return `#${to2(r)}${to2(g)}${to2(b)}`;
 }
 
-/* === NEW: bepaal hoeveel rijen per kolom passen (zonder afsnijden) === */
+/* === bepaal hoeveel rijen per kolom passen (zonder afsnijden) === */
 function rowsPerColumnThatFit(){
   const list = $("leftList");
   if(!list) return 1;
@@ -273,7 +287,6 @@ function rowsPerColumnThatFit(){
   let avail = window.innerHeight - rect.top;
   if(avail <= 0) return 1;
 
-  // Meet "basis" hoogte van een eerste rij + van een volgende rij (met divider/padding-top)
   const probeWrap = document.createElement("div");
   probeWrap.style.position = "absolute";
   probeWrap.style.left = "-99999px";
@@ -285,15 +298,14 @@ function rowsPerColumnThatFit(){
   row1.className = "row";
   row1.innerHTML = `
     <div class="left">
-      <span class="line-box">99</span>
-      <span class="dest">Voorbeeldbestemming</span>
+      <span class="line-box">X60</span>
+      <span class="dest">Voorbeeldbestemming die lang is</span>
     </div>
-    <div class="time">12'</div>
+    <div class="time">59'</div>
   `;
 
   const row2 = document.createElement("div");
   row2.className = "row";
-  // .row + .row selector vereist dat row2 direct na row1 staat:
   probeWrap.appendChild(row1);
   probeWrap.appendChild(row2);
   row2.innerHTML = row1.innerHTML;
@@ -301,14 +313,12 @@ function rowsPerColumnThatFit(){
   document.body.appendChild(probeWrap);
 
   const h1 = row1.getBoundingClientRect().height;
-  const h2 = row2.getBoundingClientRect().height; // incl. border-top + extra padding-top door .row + .row
+  const h2 = row2.getBoundingClientRect().height;
 
   document.body.removeChild(probeWrap);
 
-  // gap uit CSS (.list { gap: 22px; })
   const gap = 22;
 
-  // brute-fit: tel rijen tot het niet meer past
   let count = 0;
   let used = 0;
 
@@ -322,7 +332,6 @@ function rowsPerColumnThatFit(){
       break;
     }
   }
-
   return Math.max(1, count);
 }
 
