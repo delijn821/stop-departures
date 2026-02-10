@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Overstappen</title>
+
+<style>
+/* Fonts identiek geladen zoals in halte_scherm.html */
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Bold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'FlandersArtSans';
+  src: url('fonts/FlandersArtSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+:root{
+  --bg:#111;
+  --text:#fff;
+  --muted:#ddd;
+  --accent:#FFCC11;
+  --divider: rgba(255,255,255,.14);
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  font-family: 'FlandersArtSans', Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  padding-top: 2.75%;
+  padding-left: 5%;
+  padding-right: 5%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
+
+/* ===== Header ===== */
+.header{
+  width: 100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* FIX: title mag niet door klok heen
+   - flex: 1 1 auto (neemt resterende ruimte)
+   - overflow hidden + ellipsis
+   - min-width:0 zodat flex item echt mag krimpen
+*/
+.title{
+  font-size: 3.75em;
+  font-weight: 500;
+  letter-spacing: .01em;
+
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 24px; /* extra buffer voor zekerheid */
+
+  white-space: normal;
+  overflow: hidden;
+}
+
+.clock{
+  font-size: 3.5em;
+  font-weight: 400;
+  width: 6.2ch;
+  text-align: right;
+  flex: 0 0 6.2ch;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 2 kolommen ===== */
+.departures{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  width: 100%;
+  margin-top: 2.75%;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 980px){
+  .departures{ grid-template-columns: 1fr; }
+  body{ overflow:auto; }
+}
+
+.col{
+  display:flex;
+  flex-direction:column;
+  width: 100%;
+  overflow:hidden;
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  gap: 22px;
+  overflow:hidden;
+  padding: 10px 0;
+}
+
+/* rij: geen achtergrondvlak */
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background: transparent;
+  padding: 10px 0;
+}
+
+/* subtiele scheidingslijn */
+.row + .row{
+  border-top: 2px solid var(--divider);
+  padding-top: 22px;
+}
+
+.left{
+  display:flex;
+  align-items:center;
+  gap: 22px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* perfect centreren van lijnnummer */
+.line-box{
+  background-color: var(--accent);
+  color: #000;
+  -webkit-text-stroke: 2px #fff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 1.35em;
+  width: 4.2ch;
+  flex: 0 0 4.2ch;
+
+  padding: 0 0.55ch;
+  border-radius: 22px;
+
+  font-size: 2.65em;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  box-shadow: 0 0 15px rgba(0,0,0,0.25);
+}
+
+/* bestemming */
+.dest{
+  font-size: 2.55em;
+  font-weight: 500;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* tijd */
+.time{
+  font-size: 2.30em;
+  font-weight: 400;
+  color: var(--muted);
+  text-align:right;
+  width: 5.25ch;
+  flex: 0 0 4.2ch;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* === cancelled indicator (geen extra kolom) === */
+.cancelledText{
+  color:#ff3b30 !important;
+}
+.cancelledStrike{
+  text-decoration: line-through;
+  text-decoration-thickness: .12em;
+  text-decoration-color: rgba(255,59,48,.95);
+}
+
+/* ================= AD OVERLAY (NEW) ================= */
+#adOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: none;              /* default: hidden */
+  align-items: center;
+  justify-content: center;
+}
+#adOverlay.show{ display: flex; }
+#adOverlay img{
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;          /* volledig scherm */
+  object-position: center;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NEW: board wrapper zodat we het makkelijk kunnen verbergen -->
+<div id="board">
+  <div class="header">
+    <div class="title" id="title">Overstappen aan —</div>
+    <div class="clock" id="clock">--:--</div>
+  </div>
+
+  <div class="departures" id="grid">
+    <div class="col" id="colLeft">
+      <div class="list" id="leftList"></div>
+    </div>
+
+    <div class="col" id="colRight">
+      <div class="list" id="rightList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW: fullscreen advert overlay -->
+<div id="adOverlay" aria-hidden="true">
+  <img id="adImg" alt="Campagnebeeld">
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const API_KEY = "ee23ac060f8a4038ad6d69358d85a1b0";
+const MAX_PER_HALTE = 12;
+const COL_SIZE = 6;
+const TOTAL_SHOW = 12;
+const MAX_AANTAL_API = 12;
+const REFRESH_MS = 30000;
+const DEBUG = true;
+
+/* NEW: advert timings */
+const SHOW_BOARD_MS = 10000;   // 10 sec overstappen
+const SHOW_AD_MS    = 5000;    // 5 sec campagnebeeld
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+function log(...args){ if(DEBUG) console.log(...args); }
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function updateClock(){
+  const now = new Date();
+  $("clock").textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function parseCSVLine(line){
+  const out = [];
+  let cur = "", inQ = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if(ch === "," && !inQ){
+      out.push(cur); cur = "";
+    } else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+function getStopIdFromUrl(){
+  const p = new URLSearchParams(location.search);
+  return (p.get("stopId") || "").trim();
+}
+
+function getEntityFromStopId(stopId){
+  const firstChar = stopId[0];
+  const ent = parseInt(firstChar, 10);
+  return Number.isNaN(ent) ? null : ent;
+}
+
+function minutesUntil(iso){
+  const t = new Date(iso).getTime();
+  const now = Date.now();
+  return Math.round((t - now) / 60000);
+}
+function formatMinutes(m){
+  if(m <= 0) return "nu";
+  return `${m}'`;
+}
+
+function formatHHMM(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return "—";
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+function normalizeName(s){
+  return (s || "").toLowerCase().replace(/\s+/g," ").trim();
+}
+function cleanStopName(name){
+  if(!name) return "";
+  const re = /(\s+perron\b|\s+1\b|\s+2\b|\s+3\b|\s+6\b|\s+opstaphalte\b|\s+afstaphalte\b|\s+quai\b|,|\()/i;
+  const m = re.exec(name);
+  const cut = m ? name.slice(0, m.index) : name;
+  return cut.replace(/\s+/g," ").trim();
+}
+
+/* === inverse kleur voor text-stroke === */
+function invertHexColor(color){
+  if(!color) return "#ffffff";
+  let hex = String(color).trim();
+  if(hex.startsWith("rgb")) return "#ffffff";
+  if(hex.startsWith("#")) hex = hex.slice(1);
+  if(hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+  if(hex.length !== 6) return "#ffffff";
+
+  const r = 255 - parseInt(hex.slice(0,2), 16);
+  const g = 255 - parseInt(hex.slice(2,4), 16);
+  const b = 255 - parseInt(hex.slice(4,6), 16);
+
+  const to2 = (n) => n.toString(16).padStart(2,"0");
+  return `#${to2(r)}${to2(g)}${to2(b)}`;
+}
+
+/* === bepaal hoeveel rijen per kolom passen (zonder afsnijden) === */
+function rowsPerColumnThatFit(){
+  const list = $("leftList");
+  if(!list) return 1;
+
+  const rect = list.getBoundingClientRect();
+  let avail = window.innerHeight - rect.top;
+  if(avail <= 0) return 1;
+
+  const probeWrap = document.createElement("div");
+  probeWrap.style.position = "absolute";
+  probeWrap.style.left = "-99999px";
+  probeWrap.style.top = "-99999px";
+  probeWrap.style.visibility = "hidden";
+  probeWrap.style.width = rect.width ? rect.width + "px" : "800px";
+
+  const row1 = document.createElement("div");
+  row1.className = "row";
+  row1.innerHTML = `
+    <div class="left">
+      <span class="line-box">X60</span>
+      <span class="dest">Voorbeeldbestemming die lang is</span>
+    </div>
+    <div class="time">59'</div>
+  `;
+
+  const row2 = document.createElement("div");
+  row2.className = "row";
+  probeWrap.appendChild(row1);
+  probeWrap.appendChild(row2);
+  row2.innerHTML = row1.innerHTML;
+
+  document.body.appendChild(probeWrap);
+
+  const h1 = row1.getBoundingClientRect().height;
+  const h2 = row2.getBoundingClientRect().height;
+
+  document.body.removeChild(probeWrap);
+
+  const gap = 22;
+
+  let count = 0;
+  let used = 0;
+
+  for(let i=1; i<=COL_SIZE; i++){
+    const h = (i === 1) ? h1 : h2;
+    const extraGap = (i === 1) ? 0 : gap;
+    if(used + extraGap + h <= avail){
+      used += extraGap + h;
+      count++;
+    } else {
+      break;
+    }
+  }
+  return Math.max(1, count);
+}
+
+/* ================= ROUTES LOOKUP ================= */
+let routeMap = new Map();
+
+async function loadRoutes(){
+  const res = await fetch("./routes.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`routes.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("routes.txt lijkt leeg");
+
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
+
+  const iRouteId = idx("route_id");
+  const iShort   = idx("route_short_name");
+  const iColor   = idx("route_color");
+  const iTextCol = idx("route_text_color");
+
+  if(iRouteId < 0 || iShort < 0) throw new Error("routes.txt mist route_id/route_short_name");
+
+  const map = new Map();
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
+
+    const routeIdRaw = (row[iRouteId] ?? "").replace(/^"|"$/g,"");
+    if(routeIdRaw.length < 4) continue;
+
+    const prefix4 = routeIdRaw.slice(0,4);
+    if(!map.has(prefix4)){
+      map.set(prefix4, {
+        shortName: (row[iShort] ?? "").replace(/^"|"$/g,""),
+        color: (row[iColor] ?? "").replace(/^"|"$/g,""),
+        textColor: (row[iTextCol] ?? "").replace(/^"|"$/g,"")
+      });
+    }
+  }
+  routeMap = map;
+  log("[routes] prefixes:", routeMap.size);
+}
+
+function getRouteBadge(doorkomst){
+  const entiteit = Number(doorkomst.entiteitnummer);
+  const lijnnr = Number(doorkomst.lijnnummer);
+
+  const routeKeyNum = (entiteit * 1000) + lijnnr;
+  const prefix4 = String(routeKeyNum).padStart(4,"0").slice(0,4);
+
+  const route = routeMap.get(prefix4) || null;
+  const shortName = route?.shortName || String(lijnnr);
+  const bg = route?.color ? `#${route.color}` : null;
+  const fg = route?.textColor ? `#${route.textColor}` : null;
+
+  return { shortName, bg, fg };
+}
+
+/* ================= STOPS LOOKUP ================= */
+let stopIdToName = new Map();
+let cleanGroup = new Map();
+
+async function loadStops(){
+  const res = await fetch("./stops.txt", { cache: "no-store" });
+  if(!res.ok) throw new Error(`stops.txt niet gevonden (HTTP ${res.status})`);
+  const txt = await res.text();
+  const lines = txt.split(/\r?\n/).filter(l => l.trim().length>0);
+  if(lines.length < 2) throw new Error("stops.txt lijkt leeg");
+
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,""));
+  const idx = (name) => header.indexOf(name);
+
+  const iStopId = idx("stop_id");
+  const iStopName = idx("stop_name");
+  if(iStopId < 0 || iStopName < 0) throw new Error("stops.txt mist stop_id/stop_name");
+
+  const idToName = new Map();
+  const group = new Map();
+
+  for(let li=1; li<lines.length; li++){
+    const row = parseCSVLine(lines[li]);
+    if(row.length !== header.length) continue;
+
+    const stopId = (row[iStopId] ?? "").replace(/^"|"$/g,"").trim();
+    const stopName = (row[iStopName] ?? "").replace(/^"|"$/g,"").trim();
+    if(!stopId) continue;
+
+    idToName.set(stopId, stopName);
+
+    const cleaned = cleanStopName(stopName);
+    const norm = normalizeName(cleaned);
+    if(!norm) continue;
+
+    if(!group.has(norm)) group.set(norm, { displayName: cleaned, stopIds: [] });
+    group.get(norm).stopIds.push(stopId);
+  }
+
+  stopIdToName = idToName;
+  cleanGroup = group;
+  log("[stops] stopIdToName:", stopIdToName.size, "clean groups:", cleanGroup.size);
+}
+
+/* ================= API: per stop fetch ================= */
+async function fetchRealtimeForSingleStop(stopId){
+  const ent = getEntityFromStopId(stopId);
+  if(ent === null) return { stopId, blocks: [], error: "ongeldige entiteit" };
+
+  const url = `https://api.delijn.be/DLKernOpenData/api/v1/haltes/lijst/${ent}_${stopId}/real-time?maxAantalDoorkomsten=${MAX_AANTAL_API}`;
+  log("[api-single] url:", url);
+
+  try{
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Cache-Control": "no-cache",
+        "Ocp-Apim-Subscription-Key": API_KEY
+      }
+    });
+
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      return { stopId, blocks: [], error: `HTTP ${res.status} — ${t.slice(0,160)}` };
+    }
+
+    const data = await res.json();
+    const lijst = Array.isArray(data?.halteDoorkomstenLijst) ? data.halteDoorkomstenLijst : [];
+    const blocks = [];
+    for(const item of lijst){
+      const b = item?.halteDoorkomsten || [];
+      for(const hd of b) blocks.push(hd);
+    }
+    return { stopId, blocks, error: null };
+  }catch(e){
+    return { stopId, blocks: [], error: String(e?.message || e) };
+  }
+}
+
+/* ================= RENDER ================= */
+function renderList(el, items){
+  if(!items.length){
+    el.innerHTML = `
+      <div class="row">
+        <div class="left"><span class="dest">Geen doorkomsten</span></div>
+        <div class="time">—</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = items.map((d) => {
+    const { shortName, bg, fg } = getRouteBadge(d);
+
+    const background = bg || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const color = fg || "#000";
+    const stroke = invertHexColor(color);
+
+    const bestemming = (d.bestemming ?? "—").trim() || "—";
+
+    const statuses = Array.isArray(d.predictionStatussen) ? d.predictionStatussen : [];
+    const isCancelled =
+      (String(d.status || "").toUpperCase() === "CANCELLED") ||
+      statuses.includes("GESCHRAPT") ||
+      statuses.includes("CANCELLED");
+
+    const iso = d["real-timeTijdstip"] || d.dienstregelingTijdstip || null;
+
+    const vertrekTxt = isCancelled
+      ? formatHHMM(d.dienstregelingTijdstip || iso)
+      : (iso ? formatMinutes(minutesUntil(iso)) : "—");
+
+    const destClass = isCancelled ? "dest cancelledText cancelledStrike" : "dest";
+    const timeClass = isCancelled ? "time cancelledText cancelledStrike" : "time";
+
+    return `
+      <div class="row">
+        <div class="left">
+          <span class="line-box" style="background-color:${background};color:${color};-webkit-text-stroke:2px ${stroke};">${shortName}</span>
+          <span class="${destClass}" title="${bestemming.replace(/"/g,'&quot;')}">${bestemming}</span>
+        </div>
+        <div class="${timeClass}">${vertrekTxt}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+/* ================= MAIN ================= */
+async function loadBoard(){
+  const stopId = getStopIdFromUrl();
+
+  if(!stopId){
+    $("title").textContent = "Overstappen aan —";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    return;
+  }
+
+  const rawName = stopIdToName.get(stopId) || "";
+  const cleaned = cleanStopName(rawName);
+  const norm = normalizeName(cleaned);
+
+  const displayName = cleaned || "—";
+  $("title").textContent = `Overstappen aan ${displayName}`;
+  document.title = `Overstappen aan ${displayName}`;
+
+  let groupStopIds = [];
+  if(norm && cleanGroup.has(norm)){
+    groupStopIds = cleanGroup.get(norm).stopIds.slice();
+  } else {
+    groupStopIds = [stopId];
+  }
+  if(!groupStopIds.includes(stopId)) groupStopIds.unshift(stopId);
+
+  log("[grouping] stopIds:", groupStopIds);
+
+  const results = await Promise.all(groupStopIds.map(fetchRealtimeForSingleStop));
+
+  const all = [];
+  for(const r of results){
+    for(const hd of r.blocks){
+      const dks = hd?.doorkomsten || [];
+      const sliced = dks.slice(0, MAX_PER_HALTE);
+      for(const d of sliced) all.push(d);
+    }
+  }
+
+  if(!all.length){
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    return;
+  }
+
+  /* === dedupe op doorkomstId (dubbele ritten slechts 1x tonen) === */
+  const seen = new Set();
+  const deduped = [];
+  for(const d of all){
+    const id = d?.doorkomstId || null;
+    if(id && seen.has(id)) continue;
+    if(id) seen.add(id);
+    deduped.push(d);
+  }
+
+  deduped.sort((a,b)=>{
+    const ta = new Date(a["real-timeTijdstip"] || a.dienstregelingTijdstip).getTime();
+    const tb = new Date(b["real-timeTijdstip"] || b.dienstregelingTijdstip).getTime();
+    return ta - tb;
+  });
+
+  const dynamicColSize = rowsPerColumnThatFit();
+  const dynamicTotalShow = dynamicColSize * 2;
+
+  const show = deduped.slice(0, dynamicTotalShow);
+  const left = show.slice(0, dynamicColSize);
+  const right = show.slice(dynamicColSize, dynamicColSize*2);
+
+  renderList($("leftList"), left);
+
+  if(right.length === 0){
+    $("colRight").style.display = "none";
+  } else {
+    $("colRight").style.display = "";
+    renderList($("rightList"), right);
+  }
+}
+
+/* ================= ADVERT LOADING + CYCLE (NEW) ================= */
+let adUrls = [];
+let adIndex = 0;
+
+function isImageFilename(name){
+  const n = String(name || "").toLowerCase().trim();
+  // NIET tonen: .txt .md .ad, en enkel beeld-extensies
+  if(n.endsWith(".txt") || n.endsWith(".md") || n.endsWith(".ad")) return false;
+  return (
+    n.endsWith(".jpg")  || n.endsWith(".jpeg") || n.endsWith(".png")  ||
+    n.endsWith(".webp") || n.endsWith(".gif")  || n.endsWith(".bmp")  ||
+    n.endsWith(".svg")  || n.endsWith(".tif")  || n.endsWith(".tiff") ||
+    n.endsWith(".avif") || n.endsWith(".heic") || n.endsWith(".heif")
+  );
+}
+
+function inferGitHubRepo(){
+  // Werkt goed voor: https://<owner>.github.io/<repo>/...
+  const host = location.hostname || "";
+  const parts = host.split(".");
+  if(parts.length >= 3 && parts[1] === "github" && parts[2] === "io"){
+    const owner = parts[0];
+    const pathParts = location.pathname.split("/").filter(Boolean);
+    const repo = pathParts.length ? pathParts[0] : null;
+    if(repo) return { owner, repo };
+  }
+  return null;
+}
+
+async function loadAdList(){
+  // 1) Probeer via GitHub API (auto-discovery)
+  const inferred = inferGitHubRepo();
+  if(inferred){
+    const { owner, repo } = inferred;
+    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/advert`;
+    log("[ads] github api:", apiUrl);
+
+    try{
+      const res = await fetch(apiUrl, { cache: "no-store" });
+      if(res.ok){
+        const arr = await res.json();
+        const urls = [];
+        for(const item of arr){
+          if(item && item.type === "file" && isImageFilename(item.name)){
+            // download_url is direct raw file
+            urls.push(item.download_url);
+          }
+        }
+        if(urls.length){
+          adUrls = urls;
+          log("[ads] found via api:", adUrls.length);
+          return;
+        }
+      }else{
+        log("[ads] github api http:", res.status);
+      }
+    }catch(e){
+      log("[ads] github api error:", String(e?.message || e));
+    }
+  }
+
+  // 2) Fallback: als je ooit zelf ./advert/manifest.json toevoegt
+  //    (array van bestandsnamen of urls) werkt dit zonder repo-detectie.
+  try{
+    const res = await fetch("./advert/manifest.json", { cache: "no-store" });
+    if(res.ok){
+      const arr = await res.json();
+      const urls = [];
+      for(const x of (Array.isArray(arr) ? arr : [])){
+        const s = String(x || "").trim();
+        if(!s) continue;
+        // als het geen url is: interpreteer als bestandsnaam in ./advert/
+        const url = (s.startsWith("http://") || s.startsWith("https://")) ? s : `./advert/${s}`;
+        if(isImageFilename(s)) urls.push(url);
+      }
+      if(urls.length){
+        adUrls = urls;
+        log("[ads] found via manifest:", adUrls.length);
+        return;
+      }
+    }
+  }catch(e){
+    // stil falen
+  }
+
+  adUrls = [];
+  log("[ads] none found (geen github api match + geen manifest.json).");
+}
+
+function showBoard(){
+  $("adOverlay").classList.remove("show");
+  $("adOverlay").setAttribute("aria-hidden","true");
+  $("board").style.visibility = "visible";
+}
+
+function showAd(url){
+  $("adImg").src = url;
+  $("board").style.visibility = "hidden";
+  $("adOverlay").classList.add("show");
+  $("adOverlay").setAttribute("aria-hidden","false");
+}
+
+async function startAdCycle(){
+  await loadAdList();
+  if(!adUrls.length){
+    showBoard();
+    return;
+  }
+
+  // loop: 10s board -> 5s ad -> next ad...
+  let showingAd = false;
+
+  const tick = () => {
+    if(!adUrls.length){
+      showBoard();
+      return;
+    }
+
+    if(showingAd){
+      showBoard();
+      showingAd = false;
+      setTimeout(tick, SHOW_BOARD_MS);
+    } else {
+      const url = adUrls[adIndex % adUrls.length];
+      adIndex = (adIndex + 1) % adUrls.length;
+      showAd(url);
+      showingAd = true;
+      setTimeout(tick, SHOW_AD_MS);
+    }
+  };
+
+  // start with board visible
+  showBoard();
+  setTimeout(tick, SHOW_BOARD_MS);
+}
+
+/* ================= BOOT ================= */
+(async () => {
+  try{
+    await Promise.all([loadRoutes(), loadStops()]);
+  }catch(e){
+    console.error(e);
+    $("title").textContent = "Overstappen aan —";
+    renderList($("leftList"), []);
+    renderList($("rightList"), []);
+    $("colRight").style.display = "none";
+    // ads mogen nog wel (of niet) draaien, maar board is leeg
+  }
+
+  await loadBoard();
+  setInterval(loadBoard, REFRESH_MS);
+  window.addEventListener("resize", () => loadBoard());
+
+  // NEW: start the advert cycle
+  startAdCycle();
+})();
+</script>
+</body>
+</html>
