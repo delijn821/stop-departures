@@ -199,13 +199,13 @@ body{
   text-decoration-color: rgba(255,59,48,.95);
 }
 
-/* ================= AD OVERLAY (NEW) ================= */
+/* ================= AD OVERLAY ================= */
 #adOverlay{
   position: fixed;
   inset: 0;
   z-index: 9999;
   background: #000;
-  display: none;              /* default: hidden */
+  display: none;
   align-items: center;
   justify-content: center;
 }
@@ -213,7 +213,7 @@ body{
 #adOverlay img{
   width: 100vw;
   height: 100vh;
-  object-fit: cover;          /* volledig scherm */
+  object-fit: contain;        /* passend maken, zwarte ruimte mogelijk */
   object-position: center;
   display: block;
 }
@@ -222,7 +222,6 @@ body{
 
 <body>
 
-<!-- NEW: board wrapper zodat we het makkelijk kunnen verbergen -->
 <div id="board">
   <div class="header">
     <div class="title" id="title">Overstappen aan —</div>
@@ -240,7 +239,6 @@ body{
   </div>
 </div>
 
-<!-- NEW: fullscreen advert overlay -->
 <div id="adOverlay" aria-hidden="true">
   <img id="adImg" alt="Campagnebeeld">
 </div>
@@ -255,9 +253,9 @@ const MAX_AANTAL_API = 12;
 const REFRESH_MS = 30000;
 const DEBUG = true;
 
-/* NEW: advert timings */
-const SHOW_BOARD_MS = 10000;   // 10 sec overstappen
-const SHOW_AD_MS    = 5000;    // 5 sec campagnebeeld
+/* advert timings */
+const SHOW_BOARD_MS = 10000;
+const SHOW_AD_MS    = 5000;
 
 /* ================= HELPERS ================= */
 const $ = (id) => document.getElementById(id);
@@ -663,13 +661,15 @@ async function loadBoard(){
   }
 }
 
-/* ================= ADVERT LOADING + CYCLE (NEW) ================= */
+/* ================= ADVERT LOADING + CYCLE ================= */
 let adUrls = [];
 let adIndex = 0;
 
+/* NEW: cache + preload */
+const adCache = new Map(); // url -> HTMLImageElement
+
 function isImageFilename(name){
   const n = String(name || "").toLowerCase().trim();
-  // NIET tonen: .txt .md .ad, en enkel beeld-extensies
   if(n.endsWith(".txt") || n.endsWith(".md") || n.endsWith(".ad")) return false;
   return (
     n.endsWith(".jpg")  || n.endsWith(".jpeg") || n.endsWith(".png")  ||
@@ -680,7 +680,6 @@ function isImageFilename(name){
 }
 
 function inferGitHubRepo(){
-  // Werkt goed voor: https://<owner>.github.io/<repo>/...
   const host = location.hostname || "";
   const parts = host.split(".");
   if(parts.length >= 3 && parts[1] === "github" && parts[2] === "io"){
@@ -693,7 +692,6 @@ function inferGitHubRepo(){
 }
 
 async function loadAdList(){
-  // 1) Probeer via GitHub API (auto-discovery)
   const inferred = inferGitHubRepo();
   if(inferred){
     const { owner, repo } = inferred;
@@ -707,7 +705,6 @@ async function loadAdList(){
         const urls = [];
         for(const item of arr){
           if(item && item.type === "file" && isImageFilename(item.name)){
-            // download_url is direct raw file
             urls.push(item.download_url);
           }
         }
@@ -724,8 +721,6 @@ async function loadAdList(){
     }
   }
 
-  // 2) Fallback: als je ooit zelf ./advert/manifest.json toevoegt
-  //    (array van bestandsnamen of urls) werkt dit zonder repo-detectie.
   try{
     const res = await fetch("./advert/manifest.json", { cache: "no-store" });
     if(res.ok){
@@ -734,7 +729,6 @@ async function loadAdList(){
       for(const x of (Array.isArray(arr) ? arr : [])){
         const s = String(x || "").trim();
         if(!s) continue;
-        // als het geen url is: interpreteer als bestandsnaam in ./advert/
         const url = (s.startsWith("http://") || s.startsWith("https://")) ? s : `./advert/${s}`;
         if(isImageFilename(s)) urls.push(url);
       }
@@ -752,14 +746,57 @@ async function loadAdList(){
   log("[ads] none found (geen github api match + geen manifest.json).");
 }
 
+/* NEW: preload alle advertenties op de achtergrond */
+function preloadOne(url){
+  if(adCache.has(url)) return Promise.resolve(adCache.get(url));
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.onload = async () => {
+      // decode() helpt flikkeren vermijden, maar kan falen bij sommige types -> catch
+      try{ if(img.decode) await img.decode(); }catch(_){}
+      adCache.set(url, img);
+      resolve(img);
+    };
+    img.onerror = () => {
+      // niet blokkeren; gewoon niet cachen
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+async function preloadAds(urls){
+  // sequentieel (vriendelijk voor netwerk); wil je sneller, kan je dit parallel doen
+  for(const u of urls){
+    await preloadOne(u);
+  }
+  // preload ook alvast "volgende" (extra zekerheid)
+  if(urls.length){
+    const next = urls[(adIndex + 1) % urls.length];
+    preloadOne(next);
+  }
+}
+
 function showBoard(){
   $("adOverlay").classList.remove("show");
   $("adOverlay").setAttribute("aria-hidden","true");
   $("board").style.visibility = "visible";
 }
 
-function showAd(url){
-  $("adImg").src = url;
+async function showAd(url){
+  // NEW: zorg dat dit beeld al klaar staat (of probeer het snel te laden)
+  const cached = adCache.get(url) || await preloadOne(url);
+
+  if(cached && cached.src){
+    $("adImg").src = cached.src;
+  } else {
+    // fallback (zou zelden gebeuren)
+    $("adImg").src = url;
+  }
+
   $("board").style.visibility = "hidden";
   $("adOverlay").classList.add("show");
   $("adOverlay").setAttribute("aria-hidden","false");
@@ -772,10 +809,12 @@ async function startAdCycle(){
     return;
   }
 
-  // loop: 10s board -> 5s ad -> next ad...
+  // NEW: eerst alles preloaden (achtergrond), dan pas cyclen
+  await preloadAds(adUrls);
+
   let showingAd = false;
 
-  const tick = () => {
+  const tick = async () => {
     if(!adUrls.length){
       showBoard();
       return;
@@ -784,19 +823,24 @@ async function startAdCycle(){
     if(showingAd){
       showBoard();
       showingAd = false;
-      setTimeout(tick, SHOW_BOARD_MS);
+      setTimeout(() => { tick(); }, SHOW_BOARD_MS);
     } else {
       const url = adUrls[adIndex % adUrls.length];
       adIndex = (adIndex + 1) % adUrls.length;
-      showAd(url);
+
+      await showAd(url);
       showingAd = true;
-      setTimeout(tick, SHOW_AD_MS);
+
+      // preload alvast volgende terwijl huidige getoond wordt
+      const next = adUrls[adIndex % adUrls.length];
+      preloadOne(next);
+
+      setTimeout(() => { tick(); }, SHOW_AD_MS);
     }
   };
 
-  // start with board visible
   showBoard();
-  setTimeout(tick, SHOW_BOARD_MS);
+  setTimeout(() => { tick(); }, SHOW_BOARD_MS);
 }
 
 /* ================= BOOT ================= */
@@ -809,14 +853,12 @@ async function startAdCycle(){
     renderList($("leftList"), []);
     renderList($("rightList"), []);
     $("colRight").style.display = "none";
-    // ads mogen nog wel (of niet) draaien, maar board is leeg
   }
 
   await loadBoard();
   setInterval(loadBoard, REFRESH_MS);
   window.addEventListener("resize", () => loadBoard());
 
-  // NEW: start the advert cycle
   startAdCycle();
 })();
 </script>
